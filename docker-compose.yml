@@ -1,0 +1,76 @@
+version: '3.8'
+
+services:
+  # Base de Datos (Compartida pero con tablas separadas)
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password123
+      POSTGRES_DB: streamhub_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - stream-net
+
+  # Servicio de Películas (Catálogo)
+  catalog-service:
+    build: ./catalog-service
+    ports:
+      - "8001:8000" # Acceso directo solo para debug
+    environment:
+      DATABASE_URL: postgres://admin:password123@postgres:5432/streamhub_db?schema=catalogo
+      PORT: 8000
+    depends_on:
+      - postgres
+    networks:
+      - stream-net
+
+  # Servicio de Usuarios (Historial y Perfil)
+  users-service:
+    build: ./users-service
+    ports:
+      - "8002:8000" # Acceso directo solo para debug
+    environment:
+      DATABASE_URL: postgres://admin:password123@postgres:5432/streamhub_db?schema=users
+      PORT: 8000
+    depends_on:
+      - postgres
+    networks:
+      - stream-net
+
+  # API Gateway (Punto de entrada único)
+  gateway-service:
+    build: ./gateway-service
+    ports:
+      - "8000:8000" # Puerto público oficial
+    environment:
+      CATALOG_SERVICE_URL: http://catalog-service:8000
+      USERS_SERVICE_URL: http://users-service:8000
+      PORT: 8000
+    depends_on:
+      - catalog-service
+      - users-service
+    networks:
+      - stream-net
+
+  # Frontend
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+    depends_on:
+      - gateway-service
+    networks:
+      - stream-net
+
+networks:
+  stream-net:
+    driver: bridge
+
+volumes:
+  pgdata:

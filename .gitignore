@@ -1,0 +1,18 @@
+# Ignorar node_modules de todas las subcarpetas
+**/node_modules/
+
+# Ignorar archivos de entorno de todas las subcarpetas
+**/.env
+**/.env.local
+
+# Ignorar carpetas de compilación
+**/build/
+**/dist/
+**/.next/
+
+# Ignorar basura de sistema
+.DS_Store
+Thumbs.db
+
+# Docker logs
+*.log

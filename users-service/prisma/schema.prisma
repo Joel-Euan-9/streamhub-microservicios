@@ -1,0 +1,52 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String          @id @default(uuid())
+  email           String          @unique
+  name            String?
+  password        String
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  favoritos       Favorito[]
+  visualizaciones Visualizacion[]
+
+  @@map("users")
+}
+
+model Favorito {
+  usuarioId     String   @map("usuario_id")
+  peliculaId    String   @map("pelicula_id") @db.Uuid // Solo almacenamos el ID
+  fechaAgregado DateTime @default(now()) @map("fecha_agregado")
+  
+  usuario       User     @relation(fields: [usuarioId], references: [id])
+
+  @@id([usuarioId, peliculaId])
+  @@map("favoritos")
+}
+
+model Visualizacion {
+  usuarioId      String   @map("usuario_id")
+  peliculaId     String   @map("pelicula_id") @db.Uuid // Solo almacenamos el ID
+  minutoPausa    Int      @default(0) @map("minuto_pausa")
+  completada     Boolean  @default(false)
+  ultimaVezVisto DateTime @updatedAt @map("ultima_vez_visto")
+
+  usuario        User     @relation(fields: [usuarioId], references: [id])
+
+  @@id([usuarioId, peliculaId])
+  @@map("visualizaciones")
+}
