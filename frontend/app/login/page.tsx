@@ -6,8 +6,12 @@ export default function page() {
 		<div className="min-h-screen flex items-center justify-center text-white">
 			<div className="max-w-lg w-full">
 				<form action="" className="space-y-4">
-					<h1 className="text-3xl font-black">Porn<span className="text-orange-500">Hub</span></h1>
-					<p>Crea una cuenta para acceder a todas las películas.</p>
+                    <div className="flex items-center justify-center">
+                        <img src="img/logo.svg" alt="" className="w-8 mr-1" />
+                        <h1 className="text-3xl font-black">Stream<span className="text-orange-400">Hub</span></h1>
+                    </div>
+					
+					<p className="text-center">Crea una cuenta para acceder a todas las películas.</p>
 
 					<div className="grid grid-cols-1 space-y-1">
 						<Input
@@ -25,7 +29,7 @@ export default function page() {
 						/>
 					</div>
 
-					<div className="grid grid-cols-1 space-y-2">
+					<div className="grid grid-cols-1 space-y-10">
 						<button className="bg-blue-600 p-2.5 px-12 rounded-md font-bold">
 							Iniciar sesión
 						</button>
