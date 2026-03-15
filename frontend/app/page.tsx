@@ -1,13 +1,27 @@
-import Link from "next/link";
+'use client'
 
+import { useState, useEffect, useRef } from 'react'
+import Footer from './components/Footer'
+import FAQSection from './components/FaqSection'
+import FeaturesSection from './components/FeaturesSection'
+import DevicesSection from './components/DevicesSection'
+import Navbar from './components/Navbar'
+import HeroSection from './components/HeroSection'
+import MoviesCarousel from './components/MoviesCarousel'
 
-export default function Home() {
+// ─── PAGE ─────────────────────────────────────────────────────────────────────
+export default function PrincipalPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="text-white space-x-10">
-        <Link href="/login">Iniciar sesión</Link>
-        <Link href="/register">Registrate</Link>
+    <>
+      <Navbar />
+      <main className="mt-[70px] p-0">
+        <HeroSection />
+        <MoviesCarousel />
+        <DevicesSection />
+        <FeaturesSection />
+        <FAQSection />
       </main>
-    </div>
-  );
+      <Footer />
+    </>
+  )
 }
