@@ -1,54 +1,109 @@
 import Navbar from "../components/ui/Navbar";
 
-const MOVIES = [
-  {
-    title: "Coco",
-    year: "2017",
-    genre: "Animación",
-    img: "https://image.tmdb.org/t/p/w500/eKi8dIrr8voobbaGzDpe8w0PVbC.jpg",
-  },
-  {
-    title: "Minions",
-    year: "2015",
-    genre: "Animación",
-    img: "https://image.tmdb.org/t/p/w500/dr02BdCNAUPVU07aOodwPYv6HCf.jpg",
-  },
-  {
-    title: "Avengers",
-    year: "2012",
-    genre: "Acción",
-    img: "https://image.tmdb.org/t/p/w500/RYMX2wcKCBAr24UyPD7xwmjaTn.jpg",
-  },
-];
+// 1. Definimos las interfaces de lo que nos devuelve el Gateway
+interface Genero {
+  id: number;
+  nombre: string;
+}
 
-export default function PeliculasPage() {
+interface Pelicula {
+  id: string;
+  titulo: string;
+  descripcion: string;
+  fechaLanzamiento: string; 
+  duracion: number;
+  rutaCaratula: string;
+  rutaVideo: string;
+  rutaImagenFondo: string;
+  rutaTrailer: string;
+  generos?: Genero[]; // Opcional por si alguna peli no tiene género aún
+}
+
+// 2. Función para obtener los datos desde TU GATEWAY
+async function getPeliculas(): Promise<Pelicula[]> {
+  try {
+    // Apuntamos al puerto 8000 que es tu Gateway
+    // 'no-store' asegura que Next.js no guarde caché y siempre muestre pelis nuevas
+    const res = await fetch('http://gateway-service:8000/api/peliculas', { cache: 'no-store' });
+    
+    if (!res.ok) {
+      console.error("Error en la respuesta del servidor");
+      return [];
+    }
+   
+    return res.json();
+  } catch (error) {
+    console.error("Error haciendo fetch a las películas:", error);
+    return []; // Si se cae el backend, devolvemos un arreglo vacío para no romper la app
+  }
+}
+
+export default async function PeliculasPage() {
+  const peliculas = await getPeliculas();
+
+  // 3. Lógica para agrupar películas por orden alfabético
+  const peliculasAgrupadas = peliculas.reduce((grupos: Record<string, Pelicula[]>, pelicula) => {
+    // Tomamos la primera letra, en mayúscula
+    const letraInicial = pelicula.titulo.charAt(0).toUpperCase();
+    
+    if (!grupos[letraInicial]) {
+      grupos[letraInicial] = [];
+    }
+    grupos[letraInicial].push(pelicula);
+    
+    return grupos;
+  }, {});
+
   return (
     <>
       <Navbar />
 
       <main className="min-h-screen bg-[#0b0c15] px-5 pb-10 pt-28 text-white md:px-10">
-        <h2 className="mb-8 text-3xl font-bold text-[#3a86ff]">Películas</h2>
+        <h2 className="mb-8 text-4xl font-bold text-[#3a86ff]">Películas</h2>
 
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-6">
-          {MOVIES.map((movie) => (
-            <div key={movie.title} className="group">
-              <div className="relative aspect-[2/3] overflow-hidden rounded-xl">
-                <img
-                  src={movie.img}
-                  alt={movie.title}
-                  className="h-full w-full object-cover transition group-hover:scale-110"
-                />
+        {/* 4. Renderizamos iterando sobre las letras en orden alfabético */}
+        {Object.keys(peliculasAgrupadas).length === 0 ? (
+          <p className="text-[#aeb4c0]">No hay películas disponibles en el catálogo.</p>
+        ) : (
+          Object.keys(peliculasAgrupadas).sort().map((letra) => (
+            <div key={letra} className="mb-12">
+              
+              {/* Encabezado de la Letra con divisor estético */}
+              <div className="mb-6 flex items-center gap-4">
+                <h3 className="text-3xl font-bold text-white">{letra}</h3>
+                <div className="h-[1px] flex-grow bg-white/20"></div>
               </div>
 
-              <div className="pt-3">
-                <h3 className="font-semibold">{movie.title}</h3>
-                <p className="text-sm text-[#aeb4c0]">
-                  {movie.year} • {movie.genre}
-                </p>
+              {/* Grid de Películas de esa letra */}
+              <div className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-6">
+                {peliculasAgrupadas[letra].map((movie) => (
+                  <div key={movie.id} className="group cursor-pointer">
+                    <div className="relative aspect-[2/3] overflow-hidden rounded-xl bg-gray-800">
+                      {/* Usamos rutaCaratula de tu base de datos */}
+                      <img
+                        src={movie.rutaCaratula}
+                        alt={movie.titulo}
+                        className="h-full w-full object-cover transition duration-300 group-hover:scale-110"
+                        // Imagen por defecto si la ruta falla
+                        
+                      />
+                    </div>
+
+                    <div className="pt-3">
+                      <h3 className="font-semibold text-lg line-clamp-1">{movie.titulo}</h3>
+                      <p className="text-sm text-[#aeb4c0] line-clamp-1">
+                        {new Date(movie.fechaLanzamiento).getFullYear()} 
+                        {movie.generos && movie.generos.length > 0 
+                          ? ` • ${movie.generos.map(g => g.nombre).join(', ')}`
+                          : ''}
+                      </p>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
-          ))}
-        </div>
+          ))
+        )}
       </main>
     </>
   );

@@ -6,10 +6,12 @@ export default function page() {
         <div className="min-h-screen flex items-center justify-center text-white">
             <div className="max-w-lg w-full">
                 <form action="" className="space-y-4">
-                    <div className="flex items-center justify-center">
-                        <img src="img/logo.svg" alt="" className="w-8 mr-1" />
-                        <h1 className="text-3xl font-black">Stream<span className="text-orange-400">Hub</span></h1>
-                    </div>
+                    <div className="flex flex-col items-center justify-center">
+						<img src="https://i.ibb.co/sZgKPTr/logo.png" alt="Logo" className="w-12 mb-2" />
+						<h1 className="text-3xl font-black">
+							Stream<span className="text-blue-400">Hub</span>
+						</h1>
+					</div>
                     <p className="text-center">Crea una cuenta para acceder a todas las películas.</p>
 
                     <div className="grid grid-cols-1 space-y-1">

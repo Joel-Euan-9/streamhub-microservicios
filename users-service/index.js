@@ -33,4 +33,26 @@ app.post('/register', async (req, res) => {
     // ... lógica de registro
 });
 
+// Obtener todos los usuarios (Para el panel de administración / Swagger)
+app.get('/usuarios', async (req, res) => {
+  try {
+    // Usamos prisma.user por tu modelo, y filtramos la contraseña por seguridad
+    const usuarios = await prisma.user.findMany({
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        createdAt: true,
+        updatedAt: true
+        // Ignoramos intencionalmente el campo 'password' y los arreglos relacionales
+      }
+    });
+    
+    res.json(usuarios);
+  } catch (error) {
+    console.error("Error al obtener usuarios en la BD:", error);
+    res.status(500).json({ error: "No se pudieron obtener los usuarios" });
+  }
+});
+
 app.listen(8000, () => console.log('Users Service running on port 8000'));

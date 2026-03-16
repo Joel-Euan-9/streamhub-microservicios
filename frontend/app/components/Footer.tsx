@@ -4,7 +4,7 @@ export default function Footer() {
   return (
     <footer className="flex flex-col items-center text-center px-5 py-12" style={{ backgroundColor: '#151f2e' }}>
       <div className="mb-6">
-        <img src="/assets/logo3.png" alt="StreamHub Logo" className="h-9 opacity-90" />
+        <img src="https://i.ibb.co/Vc4NzxG1/logo-completo.png" alt="StreamHub Logo" className="h-9 opacity-90" />
       </div>
 
       <div className="flex flex-wrap justify-center gap-8 mb-5">

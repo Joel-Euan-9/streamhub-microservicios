@@ -44,7 +44,7 @@ export default function Navbar() {
         <Link href="/inicio" className="shrink-0">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/assets/logo3.png"
+            src="https://i.ibb.co/Vc4NzxG1/logo-completo.png"
             alt="StreamHub Logo"
             className="h-9 drop-shadow-[0_0_10px_rgba(58,134,255,0.45)] sm:h-10 md:h-12"
           />
@@ -85,7 +85,7 @@ export default function Navbar() {
               onClick={(e) => e.preventDefault()}
               className="text-xl font-semibold text-[#aeb4c0] transition hover:text-white hover:drop-shadow-[0_0_8px_#3a86ff] md:text-base"
             >
-              Series
+              Favoritos
             </a>
           </li>
         </ul>
