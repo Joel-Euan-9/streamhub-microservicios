@@ -17,18 +17,18 @@ Encender todo:
 
 Configurar la DB (Solo la primera vez en orden):
 
-    docker-compose exec catalog-service npx prisma generate
+    docker compose exec catalog-service npx prisma generate
 
-    docker-compose exec catalog-service npx prisma migrate dev --name init
+    docker compose exec catalog-service npx prisma migrate dev --name init
 
-    docker-compose exec catalog-service node prisma/seed.js
+    docker compose exec catalog-service node prisma/seed.js
 
 
-    docker-compose exec users-service npx prisma generate
+    docker compose exec users-service npx prisma generate
 
-    docker-compose exec users-service npx prisma migrate dev --name init
+    docker compose exec users-service npx prisma migrate dev --name init
 
-    docker-compose exec users-service node prisma/seed.js
+    docker compose exec users-service node prisma/seed.js
 
 Verificar:
 
