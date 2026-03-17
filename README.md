@@ -9,13 +9,22 @@ Crear archivos .env:
 
     En users-service/, copia .env.example y nómbralo .env.
 
-Encender todo: Ejecuta docker-compose up -d --build.
+    En gateway-service/, copia .env.example y nómbralo .env.
 
-Configurar la DB (Solo la primera vez):
+Encender todo: 
+
+    docker-compose up -d --build.
+
+Configurar la DB (Solo la primera vez en orden):
+
+    docker-compose exec catalog-service npx prisma generate
 
     docker-compose exec catalog-service npx prisma migrate dev --name init
 
     docker-compose exec catalog-service node prisma/seed.js
+
+
+    docker-compose exec users-service npx prisma generate
 
     docker-compose exec users-service npx prisma migrate dev --name init
 
@@ -23,6 +32,16 @@ Configurar la DB (Solo la primera vez):
 
 Verificar:
 
-    Backend: http://localhost:8000/api/peliculas
+    Backend: http://localhost:8000/docs
 
-    Frontend: http://localhost:3000
+    Frontend: 
+    Principal: http://localhost:3000
+    Inicio: http://localhost:3000/inicio
+    Login: http://localhost:3000/login
+
+Integrantes:
+
+    Joel Euan
+    Eduardo Heredia
+    Julio Olivera
+    Moisés Pérez
