@@ -2,15 +2,18 @@
 import Link from "next/link";
 
 interface MovieCardProps {
+  id: string; // <-- Añadimos el id aquí
   title: string;
   year: string;
   genre: string;
   img: string;
 }
 
-export default function MovieCard({ title, year, genre, img }: MovieCardProps) {
+// Recibimos el id en los parámetros
+export default function MovieCard({ id, title, year, genre, img }: MovieCardProps) {
   return (
-    <Link href="/peliculas" className="group block w-[160px] shrink-0 transition hover:-translate-y-2 sm:w-[180px] md:w-[200px]">
+    // Cambiamos el href para que use el id dinámico
+    <Link href={`/peliculas/${id}`} className="group block w-[160px] shrink-0 transition hover:-translate-y-2 sm:w-[180px] md:w-[200px]">
       <div className="relative aspect-[2/3] overflow-hidden rounded-xl shadow-[0_5px_15px_rgba(0,0,0,0.3)]">
         <img src={img} alt={title} className="h-full w-full object-cover transition duration-500 group-hover:scale-110" />
         <div className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 transition group-hover:opacity-100">

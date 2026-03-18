@@ -49,11 +49,12 @@ export default async function InicioPage() {
 
         <div className="relative z-10 space-y-12 px-5 md:px-10">
           
-          {/* SECCIÓN: LO NUEVO (Usando CarouselContainer) */}
+          {/* SECCIÓN: LO NUEVO */}
           <CarouselContainer title="Lo Nuevo">
             {peliculas.map((movie: any) => (
               <MovieCard 
                 key={movie.id} 
+                id={movie.id} // <-- ¡Esta es la línea nueva que debes agregar!
                 title={movie.titulo} 
                 year={new Date(movie.fechaLanzamiento).getFullYear().toString()} 
                 genre={movie.generos?.[0]?.nombre || "Estreno"} 

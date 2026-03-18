@@ -1,4 +1,5 @@
 import Navbar from "../components/ui/Navbar";
+import Link from "next/link"; // 1. Importamos Link de Next.js
 
 // 1. Definimos las interfaces de lo que nos devuelve el Gateway
 interface Genero {
@@ -22,8 +23,6 @@ interface Pelicula {
 // 2. Función para obtener los datos desde TU GATEWAY
 async function getPeliculas(): Promise<Pelicula[]> {
   try {
-    // Apuntamos al puerto 8000 que es tu Gateway
-    // 'no-store' asegura que Next.js no guarde caché y siempre muestre pelis nuevas
     const res = await fetch('http://gateway-service:8000/api/peliculas', { cache: 'no-store' });
     
     if (!res.ok) {
@@ -34,7 +33,7 @@ async function getPeliculas(): Promise<Pelicula[]> {
     return res.json();
   } catch (error) {
     console.error("Error haciendo fetch a las películas:", error);
-    return []; // Si se cae el backend, devolvemos un arreglo vacío para no romper la app
+    return []; 
   }
 }
 
@@ -43,7 +42,6 @@ export default async function PeliculasPage() {
 
   // 3. Lógica para agrupar películas por orden alfabético
   const peliculasAgrupadas = peliculas.reduce((grupos: Record<string, Pelicula[]>, pelicula) => {
-    // Tomamos la primera letra, en mayúscula
     const letraInicial = pelicula.titulo.charAt(0).toUpperCase();
     
     if (!grupos[letraInicial]) {
@@ -77,15 +75,17 @@ export default async function PeliculasPage() {
               {/* Grid de Películas de esa letra */}
               <div className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-6">
                 {peliculasAgrupadas[letra].map((movie) => (
-                  <div key={movie.id} className="group cursor-pointer">
+                  // 2. AQUI ESTÁ LA MAGIA: Cambiamos <div> por <Link> y añadimos el href dinámico
+                  <Link 
+                    href={`/peliculas/${movie.id}`} 
+                    key={movie.id} 
+                    className="group cursor-pointer block"
+                  >
                     <div className="relative aspect-[2/3] overflow-hidden rounded-xl bg-gray-800">
-                      {/* Usamos rutaCaratula de tu base de datos */}
                       <img
                         src={movie.rutaCaratula}
                         alt={movie.titulo}
                         className="h-full w-full object-cover transition duration-300 group-hover:scale-110"
-                        // Imagen por defecto si la ruta falla
-                        
                       />
                     </div>
 
@@ -98,7 +98,7 @@ export default async function PeliculasPage() {
                           : ''}
                       </p>
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             </div>
