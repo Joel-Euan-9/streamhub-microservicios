@@ -1,77 +1,128 @@
-import { Play, Star, CalendarDays, Clapperboard, Youtube } from 'lucide-react';
+"use client"; // 1. OBLIGATORIO: Añadimos esto para poder usar useState
+
+import { useState } from 'react';
+import { Play, Star, CalendarDays, Clapperboard, Youtube, X } from 'lucide-react'; // 2. Importamos 'X' para el botón de cerrar
 
 interface Props {
   movie: {
     titulo: string;
-    descripcion: string; // Cambiado de sinopsis a descripcion
+    descripcion: string;
     rutaCaratula: string;
     rutaImagenFondo: string;
     fechaLanzamiento: string;
-    rutaTrailer: string; // Cambiado de trailerUrl a rutaTrailer
-    duracion: number;    // Añadido según esquema
+    rutaTrailer: string;
+    duracion: number;
     generos?: { nombre: string }[];
   }
 }
 
 export default function MovieHero({ movie }: Props) {
-  // Formatear fecha completa (ej: 15 de marzo de 2024)
+  // 3. Estado para controlar si el modal del tráiler está abierto
+  const [isTrailerOpen, setIsTrailerOpen] = useState(false);
+
+  // Formatear fecha completa
   const fechaCompleta = new Date(movie.fechaLanzamiento).toLocaleDateString('es-ES', {
     day: 'numeric',
     month: 'long',
     year: 'numeric'
   });
 
-  return (
-    <section className="relative w-full min-h-[70vh] flex items-center bg-[#020817] text-white overflow-hidden">
-      <div className="absolute inset-0 z-0">
-        <img src={movie.rutaImagenFondo} alt="" className="w-full h-full object-cover opacity-30 blur-[2px]" />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#020817] via-[#020817]/80 to-transparent" />
-      </div>
+  // Función para convertir link normal de YT a link de "embed" (reutilizada del reproductor)
+  const getEmbedUrl = (url: string) => {
+    if (!url) return '';
+    if (url.includes('youtube.com/watch?v=')) {
+      // Añadimos ?autoplay=1 para que inicie solo al abrir el modal
+      return url.replace('watch?v=', 'embed/') + '?autoplay=1';
+    }
+    if (url.includes('youtu.be/')) {
+      return url.replace('youtu.be/', 'youtube.com/embed/') + '?autoplay=1';
+    }
+    return url;
+  };
 
-      <div className="relative z-10 max-w-7xl mx-auto px-6 py-12 grid md:grid-cols-[300px_1fr] gap-12 items-center">
-        <div className="hidden md:block aspect-[2/3] rounded-2xl overflow-hidden shadow-2xl border-4 border-white/5">
-          <img src={movie.rutaCaratula} alt={movie.titulo} className="w-full h-full object-cover" />
+  return (
+    <>
+      <section className="relative w-full min-h-[70vh] flex items-center bg-[#020817] text-white overflow-hidden">
+        <div className="absolute inset-0 z-0">
+          <img src={movie.rutaImagenFondo} alt="" className="w-full h-full object-cover opacity-30 blur-[2px]" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#020817] via-[#020817]/80 to-transparent" />
         </div>
 
-        <div className="flex flex-col gap-6">
-          <h1 className="text-5xl md:text-7xl font-black tracking-tight">{movie.titulo}</h1>
-
-          <div className="flex flex-wrap items-center gap-4 text-sm font-semibold">
-            <span className="flex items-center gap-1.5 text-emerald-400"><Star size={18} fill="currentColor" /> 9.2</span>
-            <span>•</span>
-            <span className="flex items-center gap-1.5 text-gray-300"><CalendarDays size={18} /> {fechaCompleta}</span>
-            <span>•</span>
-            <span className="text-gray-300">{movie.duracion} min</span>
+        <div className="relative z-10 max-w-7xl mx-auto px-6 py-12 grid md:grid-cols-[300px_1fr] gap-12 items-center">
+          <div className="hidden md:block aspect-[2/3] rounded-2xl overflow-hidden shadow-2xl border-4 border-white/5">
+            <img src={movie.rutaCaratula} alt={movie.titulo} className="w-full h-full object-cover" />
           </div>
 
-          {/* MAPEO DE TODOS LOS GÉNEROS */}
-          <div className="flex flex-wrap gap-2">
-            {movie.generos?.map((g, i) => (
-              <span key={i} className="bg-[#3a86ff]/20 px-3 py-1 rounded-full border border-[#3a86ff]/30 text-[#3a86ff] text-xs uppercase tracking-wider">
-                {g.nombre}
-              </span>
-            ))}
+          <div className="flex flex-col gap-6">
+            <h1 className="text-5xl md:text-7xl font-black tracking-tight">{movie.titulo}</h1>
+
+            <div className="flex flex-wrap items-center gap-4 text-sm font-semibold">
+              <span className="flex items-center gap-1.5 text-emerald-400"><Star size={18} fill="currentColor" /> 9.2</span>
+              <span>•</span>
+              <span className="flex items-center gap-1.5 text-gray-300"><CalendarDays size={18} /> {fechaCompleta}</span>
+              <span>•</span>
+              <span className="text-gray-300">{movie.duracion} min</span>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              {movie.generos?.map((g, i) => (
+                <span key={i} className="bg-[#3a86ff]/20 px-3 py-1 rounded-full border border-[#3a86ff]/30 text-[#3a86ff] text-xs uppercase tracking-wider">
+                  {g.nombre}
+                </span>
+              ))}
+            </div>
+
+            <p className="text-lg text-gray-200 leading-relaxed max-w-3xl">
+              {movie.descripcion}
+            </p>
+
+            <div className="flex flex-wrap gap-4 pt-4">
+              <button className="flex items-center gap-2.5 rounded-full bg-[#3a86ff] px-10 py-4 font-bold text-lg hover:scale-105 transition-all shadow-[0_0_25px_rgba(58,134,255,0.4)]">
+                <Play size={24} fill="white" /> Ver Ahora
+              </button>
+              
+              {/* 4. Cambiamos la etiqueta <a> por un <button> que actualiza el estado */}
+              {movie.rutaTrailer && (
+                <button 
+                  onClick={() => setIsTrailerOpen(true)}
+                  className="flex items-center gap-2.5 rounded-full bg-red-600/20 px-10 py-4 font-bold text-lg border border-red-600/50 hover:bg-red-600/40 transition-all"
+                >
+                  <Youtube size={24} className="text-red-500" /> Ver Trailer
+                </button>
+              )}
+            </div>
           </div>
+        </div>
+      </section>
 
-          <p className="text-lg text-gray-200 leading-relaxed max-w-3xl">
-            {movie.descripcion}
-          </p>
-
-          <div className="flex flex-wrap gap-4 pt-4">
-            <button className="flex items-center gap-2.5 rounded-full bg-[#3a86ff] px-10 py-4 font-bold text-lg hover:scale-105 transition-all">
-              <Play size={24} fill="white" /> Ver Ahora
+      {/* 5. MODAL DEL TRÁILER */}
+      {isTrailerOpen && movie.rutaTrailer && (
+        <div 
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+          onClick={() => setIsTrailerOpen(false)} // Cierra al hacer clic en el fondo oscuro
+        >
+          {/* Contenedor del video - Evitamos que el clic aquí cierre el modal */}
+          <div 
+            className="relative w-full max-w-5xl aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl border border-white/10"
+            onClick={(e) => e.stopPropagation()} 
+          >
+            {/* Botón de cerrar (X) */}
+            <button 
+              onClick={() => setIsTrailerOpen(false)}
+              className="absolute top-4 right-4 z-10 p-2 bg-black/60 hover:bg-red-600 rounded-full text-white transition-colors backdrop-blur-md"
+            >
+              <X size={24} />
             </button>
             
-            {/* BOTÓN DE TRAILER DEDICADO */}
-            {movie.rutaTrailer && (
-              <a href={movie.rutaTrailer} target="_blank" rel="noopener noreferrer" 
-                 className="flex items-center gap-2.5 rounded-full bg-red-600/20 px-10 py-4 font-bold text-lg border border-red-600/50 hover:bg-red-600/40 transition-all">
-                <Youtube size={24} className="text-red-500" /> Ver Trailer
-              </a>
-            )}
+            <iframe
+              src={getEmbedUrl(movie.rutaTrailer)}
+              className="w-full h-full"
+              allowFullScreen
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            />
           </div>
         </div>
-      </div>
-    </section>
+      )}
+    </>
   );
 }
