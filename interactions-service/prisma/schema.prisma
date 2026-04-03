@@ -1,0 +1,53 @@
+// interactions-service/prisma/schema.prisma
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Modelo para los comentarios de los usuarios en las películas
+model Comentario {
+  id         String   @id @default(uuid())
+  usuarioId  String   @map("usuario_id")
+  peliculaId String   @map("pelicula_id") @db.Uuid
+  contenido  String   @db.Text
+  fecha      DateTime @default(now())
+
+  @@map("comentarios")
+}
+
+enum TipoInteraccion {
+  LIKE
+  DISLIKE
+}
+
+// Modelo para evitar votos dobles (1 like/dislike por usuario por película)
+model Interaccion {
+  id         String          @id @default(uuid())
+  usuarioId  String          @map("usuario_id")
+  peliculaId String          @map("pelicula_id") @db.Uuid
+  tipo       TipoInteraccion
+  fecha      DateTime        @default(now())
+
+  // Esto garantiza que un usuario no pueda darle like 2 veces a la misma peli
+  @@unique([usuarioId, peliculaId])
+  @@map("interacciones")
+}
+
+// Modelo para las gráficas del usuario Studio (Vistas por mes)
+model RegistroVistaMensual {
+  id             String   @id @default(uuid())
+  peliculaId     String   @map("pelicula_id") @db.Uuid
+  mes            Int      // 1 al 12
+  anio           Int      // Ej: 2026
+  cantidadVistas Int      @default(0) @map("cantidad_vistas")
+
+  // Solo debe haber un registro por película en un mes específico de un año
+  @@unique([peliculaId, mes, anio])
+  @@map("registro_vistas_mensuales")
+}

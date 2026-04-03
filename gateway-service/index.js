@@ -23,6 +23,13 @@ const swaggerOptions = {
         url: 'http://localhost:8000',
       },
     ],
+    tags: [
+      { name: 'Catálogo', description: 'Operaciones relacionadas con películas' },
+      { name: 'Usuarios', description: 'Gestión de usuarios' },
+      { name: 'Historial', description: 'Seguimiento de reproducción' },
+      { name: 'Seguir Viendo', description: 'Películas en progreso' },
+      { name: 'Interacciones', description: 'Comentarios y votos' }
+    ],
   },
   apis: ['./index.js'],
 };
@@ -33,6 +40,8 @@ app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 // --- VARIABLES DE ENTORNO ---
 const CATALOG_URL = process.env.CATALOG_SERVICE_URL || 'http://catalog-service:8000';
 const USERS_URL = process.env.USERS_SERVICE_URL || 'http://users-service:8000';
+const INTERACTIONS_URL = process.env.INTERACTIONS_SERVICE_URL || 'http://interactions-service:8000';
+const STREAM_URL = process.env.STREAM_URL || 'http://streamhub.local/';
 
 // --- RUTAS DEL GATEWAY ---
 
@@ -41,7 +50,8 @@ const USERS_URL = process.env.USERS_SERVICE_URL || 'http://users-service:8000';
  * /api/peliculas:
  *   get:
  *     summary: Obtiene el catálogo completo de películas
- *     tags: [Catálogo]
+ *     tags:
+ *       - Catálogo
  *     responses:
  *       200:
  *         description: Lista de películas obtenida con éxito
@@ -57,10 +67,31 @@ app.get('/api/peliculas', async (req, res) => {
 
 /**
  * @swagger
+ * /api/peliculas/estrenos:
+ *   get:
+ *     summary: Obtiene el top 10 de películas más recientes
+ *     tags:
+ *      - Catálogo
+ *     responses:
+ *       200:
+ *         description: Lista de estrenos
+ */
+app.get('/api/peliculas/estrenos', async (req, res) => {
+  try {
+    const resp = await axios.get(`${CATALOG_URL}/peliculas/estrenos`);
+    res.json(resp.data);
+  } catch (error) {
+    res.status(500).json({ error: "Error conectando con el catálogo para los estrenos" });
+  }
+});
+
+/**
+ * @swagger
  * /api/peliculas/{id}:
  *   get:
  *     summary: Obtiene los detalles de una película específica
- *     tags: [Catálogo]
+ *     tags:
+ *       - Catálogo
  *     parameters:
  *       - in: path
  *         name: id
@@ -76,7 +107,15 @@ app.get('/api/peliculas', async (req, res) => {
 app.get('/api/peliculas/:id', async (req, res) => {
   try {
     const resp = await axios.get(`${CATALOG_URL}/peliculas/${req.params.id}`);
-    res.json(resp.data);
+    let pelicula = resp.data;
+    
+    // MAGIA DE STREAMING: Concatenamos el dominio de Nginx con el nombre del archivo
+    if (pelicula && pelicula.rutaVideo) {
+      // Creamos un nuevo campo llamado "rutaVideoCompleta" para el frontend
+      pelicula.rutaVideoCompleta = `${STREAM_URL}${pelicula.rutaVideo}`;
+    }
+
+    res.json(pelicula);
   } catch (error) {
     if (error.response && error.response.status === 404) {
       return res.status(404).json({ error: "Película no encontrada" });
@@ -94,7 +133,8 @@ app.get('/api/peliculas/:id', async (req, res) => {
  * /api/historial:
  *   post:
  *     summary: Registra el progreso de visualización de un usuario
- *     tags: [Historial]
+ *     tags:
+ *       - Historial
  *     requestBody:
  *       required: true
  *       content:
@@ -126,7 +166,8 @@ app.post('/api/historial', async (req, res) => {
  * /api/seguir-viendo/{usuarioId}:
  *   get:
  *     summary: Obtiene las películas que el usuario dejó a medias
- *     tags: [Seguir Viendo]
+ *     tags:
+ *       - Seguir Viendo
  *     parameters:
  *       - in: path
  *         name: usuarioId
@@ -179,7 +220,8 @@ app.get('/api/seguir-viendo/:usuarioId', async (req, res) => {
  * /api/usuarios:
  *   get:
  *     summary: Obtiene la lista completa de usuarios registrados
- *     tags: [Usuarios]
+ *     tags:
+ *      - Usuarios
  *     responses:
  *       200:
  *         description: Lista de usuarios obtenida con éxito
@@ -197,20 +239,102 @@ app.get('/api/usuarios', async (req, res) => {
 
 /**
  * @swagger
- * /api/peliculas/estrenos:
+ * /api/interacciones/comentarios/{peliculaId}:
  *   get:
- *     summary: Obtiene el top 10 de películas más recientes
- *     tags: [Catálogo]
+ *     summary: Obtiene todos los comentarios de una película específica
+ *     tags:
+ *       - Interacciones
+ *     parameters:
+ *       - in: path
+ *         name: peliculaId
+ *         required: true
+ *         schema:
+ *           type: string
  *     responses:
  *       200:
- *         description: Lista de estrenos
+ *         description: Lista de comentarios obtenida con éxito
  */
-app.get('/api/peliculas/estrenos', async (req, res) => {
+app.get('/api/interacciones/comentarios/:peliculaId', async (req, res) => {
   try {
-    const resp = await axios.get(`${CATALOG_URL}/peliculas/estrenos`);
+    const resp = await axios.get(`${INTERACTIONS_URL}/comentarios/${req.params.peliculaId}`);
     res.json(resp.data);
   } catch (error) {
-    res.status(500).json({ error: "Error conectando con el catálogo para los estrenos" });
+    console.error("Error en /api/interacciones/comentarios:", error.message);
+    res.status(500).json({ error: "Error conectando con el servicio de interacciones" });
+  }
+});
+
+/**
+ * @swagger
+ * /api/interacciones/comentarios:
+ *   post:
+ *     summary: Agrega un nuevo comentario a una película
+ *     tags:
+ *       - Interacciones
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               usuarioId:
+ *                 type: string
+ *               peliculaId:
+ *                 type: string
+ *               contenido:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Comentario creado con éxito
+ */
+app.post('/api/interacciones/comentarios', async (req, res) => {
+  try {
+    const resp = await axios.post(`${INTERACTIONS_URL}/comentarios`, req.body);
+    res.json(resp.data);
+  } catch (error) {
+    res.status(500).json({ error: "Error al crear el comentario" });
+  }
+});
+
+/**
+ * @swagger
+ * /api/interacciones/votar:
+ *   post:
+ *     summary: Registra un Like o Dislike en una película
+ *     tags:
+ *       - Interacciones
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               usuarioId:
+ *                 type: string
+ *               peliculaId:
+ *                 type: string
+ *               tipo:
+ *                 type: string
+ *                 enum:
+ *                   - LIKE
+ *                   - DISLIKE
+ *     responses:
+ *       200:
+ *         description: Interacción registrada con éxito
+ *       400:
+ *         description: El usuario ya votó en esta película
+ */
+app.post('/api/interacciones/votar', async (req, res) => {
+  try {
+    const resp = await axios.post(`${INTERACTIONS_URL}/interaccion`, req.body);
+    res.json(resp.data);
+  } catch (error) {
+    if (error.response && error.response.status === 400) {
+      return res.status(400).json({ error: error.response.data.error });
+    }
+    res.status(500).json({ error: "Error al registrar la interacción" });
   }
 });
 

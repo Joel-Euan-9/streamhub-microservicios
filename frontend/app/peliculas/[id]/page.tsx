@@ -37,7 +37,7 @@ export default async function PeliculaDetailPage({ params }: Props) {
   }
 
   // URL Temporal para el reproductor (Imagen de fondo como pediste)
-  const temporaryVideoUrl = movie.rutaImagenFondo; 
+  //const temporaryVideoUrl = movie.rutaImagenFondo; 
   // Cuando tengas la ruta real, cambiar por: movie.rutaVideo
 
   return (
@@ -52,7 +52,7 @@ export default async function PeliculaDetailPage({ params }: Props) {
 
         {/* PARTE 2: REPRODUCTOR */}
         <MoviePlayer 
-          videoUrl={temporaryVideoUrl} 
+          videoUrl={movie.rutaVideoCompleta}
           posterUrl={movie.rutaImagenFondo} 
         />
 

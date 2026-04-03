@@ -49,6 +49,26 @@ app.get('/peliculas/:id', async (req, res) => {
     res.json(pelicula);
   } catch (error) {
     res.status(400).json({ error: "ID no válido o no encontrado" });
+  } 
+});
+
+app.patch('/peliculas/:id/estadisticas', async (req, res) => {
+  const { tipo } = req.body; // Puede ser "LIKE", "DISLIKE" o "VISTA"
+  try {
+    const dataUpdate = {};
+    if (tipo === 'LIKE') dataUpdate.likesTotales = { increment: 1 };
+    if (tipo === 'DISLIKE') dataUpdate.dislikesTotales = { increment: 1 };
+    if (tipo === 'VISTA') dataUpdate.vistasTotales = { increment: 1 };
+
+    const peliculaActualizada = await prisma.pelicula.update({
+      where: { id: req.params.id },
+      data: dataUpdate
+    });
+    
+    // Devolvemos el creadorId para que el servicio que llamó sepa a quién pagarle
+    res.json({ creadorId: peliculaActualizada.creadorId, tipoContenido: peliculaActualizada.tipoContenido });
+  } catch (error) {
+    res.status(500).json({ error: "Error al actualizar estadísticas" });
   }
 });
 

@@ -1,11 +1,7 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// users-service/prisma/schema.prisma
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
   binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
 }
 
@@ -14,22 +10,51 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Enumerador para los tipos de planes
+enum Plan {
+  BASIC
+  PREMIUM
+  STUDIO
+}
+
 model User {
-  id              String          @id @default(uuid())
-  email           String          @unique
-  name            String?
-  password        String
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
-  favoritos       Favorito[]
-  visualizaciones Visualizacion[]
+  id                 String          @id @default(uuid())
+  email              String          @unique
+  name               String?
+  password           String
+  
+  // Nuevos campos para los planes y billetera
+  plan               Plan            @default(BASIC)
+  peliculasVistasHoy Int             @default(0) @map("peliculas_vistas_hoy")
+  fechaUltimaVista   DateTime?       @map("fecha_ultima_vista")
+  saldoBilletera     Float           @default(0.0) @map("saldo_billetera")
+  
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+  
+  favoritos          Favorito[]
+  visualizaciones    Visualizacion[]
+  transacciones      Transaccion[]   // Relación con el historial de billetera
 
   @@map("users")
 }
 
+// Historial de ganancias simuladas para usuarios STUDIO
+model Transaccion {
+  id          String   @id @default(uuid())
+  usuarioId   String   @map("usuario_id")
+  monto       Float    // Cantidad en dólares
+  descripcion String   // Ej: "Comisión por 100 visualizaciones en StreamHub"
+  fecha       DateTime @default(now())
+
+  usuario     User     @relation(fields: [usuarioId], references: [id])
+
+  @@map("transacciones")
+}
+
 model Favorito {
   usuarioId     String   @map("usuario_id")
-  peliculaId    String   @map("pelicula_id") @db.Uuid // Solo almacenamos el ID
+  peliculaId    String   @map("pelicula_id") @db.Uuid
   fechaAgregado DateTime @default(now()) @map("fecha_agregado")
   
   usuario       User     @relation(fields: [usuarioId], references: [id])
@@ -40,7 +65,7 @@ model Favorito {
 
 model Visualizacion {
   usuarioId      String   @map("usuario_id")
-  peliculaId     String   @map("pelicula_id") @db.Uuid // Solo almacenamos el ID
+  peliculaId     String   @map("pelicula_id") @db.Uuid
   minutoPausa    Int      @default(0) @map("minuto_pausa")
   completada     Boolean  @default(false)
   ultimaVezVisto DateTime @updatedAt @map("ultima_vez_visto")

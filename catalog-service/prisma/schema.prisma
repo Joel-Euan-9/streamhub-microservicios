@@ -1,15 +1,19 @@
 // catalog-service/prisma/schema.prisma
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
   binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
-  // Recomendación: No usar output personalizado para evitar errores en Docker
-  // output = "../generated/prisma" 
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+// Enumerador para diferenciar el origen del contenido
+enum TipoContenido {
+  ORIGINAL
+  TERCEROS
 }
 
 // Modelo de Géneros
@@ -23,19 +27,29 @@ model Genero {
   @@map("generos")
 }
 
-// Modelo de Películas (Solo datos del contenido, sin usuarios ni favoritos)
+// Modelo de Películas
 model Pelicula {
-  id               String   @id @default(uuid()) @db.Uuid
-  titulo           String   @db.VarChar(200)
-  descripcion      String   @db.Text
-  fechaLanzamiento DateTime @map("fecha_lanzamiento") @db.Date
+  id               String        @id @default(uuid()) @db.Uuid
+  titulo           String        @db.VarChar(200)
+  descripcion      String        @db.Text
+  fechaLanzamiento DateTime      @map("fecha_lanzamiento") @db.Date
   duracion         Int
   
   // Rutas de archivos multimedia
-  rutaCaratula     String   @map("ruta_caratula") @db.VarChar(500)
-  rutaVideo        String   @map("ruta_video") @db.VarChar(500)
-  rutaImagenFondo  String   @map("ruta_imagen_fondo") @db.VarChar(500)
-  rutaTrailer      String   @map("ruta_trailer") @db.VarChar(500)
+  rutaCaratula     String        @map("ruta_caratula") @db.VarChar(500)
+  rutaVideo        String        @map("ruta_video") @db.VarChar(500)
+  rutaImagenFondo  String        @map("ruta_imagen_fondo") @db.VarChar(500)
+  rutaTrailer      String        @map("ruta_trailer") @db.VarChar(500)
+
+  // --- NUEVOS CAMPOS PARA LOS REQUERIMIENTOS ---
+  requierePremium  Boolean       @default(false) @map("requiere_premium")
+  tipoContenido    TipoContenido @default(ORIGINAL) @map("tipo_contenido")
+  creadorId        String?       @map("creador_id") // ID del usuario STUDIO que la subió
+  
+  // Contadores rápidos para estadísticas
+  vistasTotales    Int           @default(0) @map("vistas_totales")
+  likesTotales     Int           @default(0) @map("likes_totales")
+  dislikesTotales  Int           @default(0) @map("dislikes_totales")
 
   // Relaciones
   generos          Genero[]
