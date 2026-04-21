@@ -3,11 +3,14 @@ const axios = require('axios');
 const cors = require('cors');
 const swaggerUi = require('swagger-ui-express');
 const swaggerJsDoc = require('swagger-jsdoc');
+const authMiddleware = require('./middleware/authMiddleware.js');
+const cookieParser = require('cookie-parser');
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
+app.use(cookieParser());
 
 // --- CONFIGURACIÓN DE SWAGGER ---
 const swaggerOptions = {
@@ -56,7 +59,7 @@ const STREAM_URL = process.env.STREAM_URL || 'http://streamhub.local/';
  *       200:
  *         description: Lista de películas obtenida con éxito
  */
-app.get('/api/peliculas', async (req, res) => {
+app.get('/api/peliculas', authMiddleware, async (req, res) => {
   try {
     const resp = await axios.get(`${CATALOG_URL}/peliculas`);
     res.json(resp.data);
@@ -76,7 +79,7 @@ app.get('/api/peliculas', async (req, res) => {
  *       200:
  *         description: Lista de estrenos
  */
-app.get('/api/peliculas/estrenos', async (req, res) => {
+app.get('/api/peliculas/estrenos', authMiddleware, async (req, res) => {
   try {
     const resp = await axios.get(`${CATALOG_URL}/peliculas/estrenos`);
     res.json(resp.data);
@@ -104,7 +107,7 @@ app.get('/api/peliculas/estrenos', async (req, res) => {
  *       404:
  *         description: Película no encontrada
  */
-app.get('/api/peliculas/:id', async (req, res) => {
+app.get('/api/peliculas/:id', authMiddleware, async (req, res) => {
   try {
     const resp = await axios.get(`${CATALOG_URL}/peliculas/${req.params.id}`);
     let pelicula = resp.data;
@@ -152,7 +155,7 @@ app.get('/api/peliculas/:id', async (req, res) => {
  *       200:
  *         description: Historial actualizado
  */
-app.post('/api/historial', async (req, res) => {
+app.post('/api/historial', authMiddleware, async (req, res) => {
   try {
     const resp = await axios.post(`${USERS_URL}/historial`, req.body);
     res.json(resp.data);
@@ -178,7 +181,7 @@ app.post('/api/historial', async (req, res) => {
  *       200:
  *         description: Lista combinada de historial y detalles de películas
  */
-app.get('/api/seguir-viendo/:usuarioId', async (req, res) => {
+app.get('/api/seguir-viendo/:usuarioId', authMiddleware, async (req, res) => {
   try {
 
     const historialResp = await axios.get(`${USERS_URL}/historial/${req.params.usuarioId}`);
@@ -226,7 +229,7 @@ app.get('/api/seguir-viendo/:usuarioId', async (req, res) => {
  *       200:
  *         description: Lista de usuarios obtenida con éxito
  */
-app.get('/api/usuarios', async (req, res) => {
+app.get('/api/usuarios', authMiddleware, async (req, res) => {
   try {
     // Le pedimos al microservicio de usuarios que nos devuelva todos
     const resp = await axios.get(`${USERS_URL}/usuarios`);
@@ -236,6 +239,43 @@ app.get('/api/usuarios', async (req, res) => {
     res.status(500).json({ error: "Error conectando con el servicio de usuarios" });
   }
 });
+
+/**
+ * @swagger
+ * /api/usuarios/register
+ *  post: 
+ *    summary: Crea un nuevo usuario al registrarse
+ *    tags: 
+ *      -Usuarios
+ *    responses: 
+ *      200:
+ *        description: Usuario registrado exitosamente
+ */
+
+app.post('/api/auth/register', async (req, res) => {
+  try {
+    const resp = await axios.post(`${USERS_URL}/register`, req.body);
+    res.json(resp.data);
+  } catch (error) {
+    res.status(500).json({ error: "Error en registro" });
+  }
+});
+
+/**
+ * @swagger
+ * /api/usuarios/login
+ * post: 
+ *   summary: Verifica si un usuario puede ingresar a la platafoma 
+ */
+
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const resp = await axios.post(`${USERS_URL}/login`, req.body);
+    res.json(resp.data);
+  } catch (error) {
+    res.status(500).json({ error: "Error al inciar sesión" })
+  }
+})
 
 /**
  * @swagger
@@ -254,7 +294,7 @@ app.get('/api/usuarios', async (req, res) => {
  *       200:
  *         description: Lista de comentarios obtenida con éxito
  */
-app.get('/api/interacciones/comentarios/:peliculaId', async (req, res) => {
+app.get('/api/interacciones/comentarios/:peliculaId', authMiddleware, async (req, res) => {
   try {
     const resp = await axios.get(`${INTERACTIONS_URL}/comentarios/${req.params.peliculaId}`);
     res.json(resp.data);
@@ -288,7 +328,7 @@ app.get('/api/interacciones/comentarios/:peliculaId', async (req, res) => {
  *       200:
  *         description: Comentario creado con éxito
  */
-app.post('/api/interacciones/comentarios', async (req, res) => {
+app.post('/api/interacciones/comentarios', authMiddleware, async (req, res) => {
   try {
     const resp = await axios.post(`${INTERACTIONS_URL}/comentarios`, req.body);
     res.json(resp.data);
@@ -326,7 +366,7 @@ app.post('/api/interacciones/comentarios', async (req, res) => {
  *       400:
  *         description: El usuario ya votó en esta película
  */
-app.post('/api/interacciones/votar', async (req, res) => {
+app.post('/api/interacciones/votar', authMiddleware, async (req, res) => {
   try {
     const resp = await axios.post(`${INTERACTIONS_URL}/interaccion`, req.body);
     res.json(resp.data);
