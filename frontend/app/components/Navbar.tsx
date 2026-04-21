@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Menu, X, Search, User } from 'lucide-react' // Usaremos lucide para los iconos
+import { logout } from '../actions/auth' // Importamos la función de logout
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
@@ -84,6 +85,7 @@ export default function Navbar() {
           style={{ backgroundColor: '#008ccc' }}>
           Suscribirse
         </a>
+        
       </div>
 
       {/* --- MENÚ DESPLEGABLE MÓVIL --- */}

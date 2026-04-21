@@ -2,6 +2,9 @@ const express = require('express');
 const { PrismaClient } = require('@prisma/client');
 const app = express();
 const prisma = new PrismaClient();
+    const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
+
 
 app.use(express.json());
 
@@ -29,8 +32,104 @@ app.get('/historial/:usuarioId', async (req, res) => {
 });
 
 // Crear usuario (simplificado)
+
 app.post('/register', async (req, res) => {
-    // ... lógica de registro
+  try {
+    const { username, email, password } = req.body;
+
+    console.log("BODY:", req.body); // 👈 DEBUG
+
+    if (!email || !password) {
+      return res.status(400).json({ error: "Email y password requeridos" });
+    }
+
+    // Verificar si ya existe
+    const existingUser = await prisma.user.findUnique({
+      where: { email }
+    });
+
+    if (existingUser) {
+      return res.status(400).json({ error: "El usuario ya existe" });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const user = await prisma.user.create({
+      data: {
+        email,
+        password: hashedPassword,
+        name: username
+      }
+    });
+
+    res.json({
+      message: "Usuario creado",
+      userId: user.id
+    });
+
+  } catch (error) {
+    console.error("ERROR REGISTER:", error); // 👈 CLAVE
+    res.status(500).json({
+      error: "Error en registro",
+      detalle: error.message
+    });
+  }
+});
+
+// Autenticar de usuario
+app.post('/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    console.log("EMAIL:", email);
+    console.log("PASSWORD:", password);
+
+    const user = await prisma.user.findUnique({
+      where: { email }
+    });
+
+    console.log("USER:", user);
+
+    if (!user) {
+      return res.status(400).json({ error: "Credenciales inválidas" });
+    }
+
+    const isValid = await bcrypt.compare(password, user.password);
+
+    console.log("HASH:", user.password);
+    console.log("COMPARE:", isValid);
+
+    if (!isValid) {
+      return res.status(400).json({ error: "Credenciales inválidas" });
+    }
+
+    // 👇 AGREGA ESTO TAMBIÉN
+
+
+    const token = jwt.sign(
+      {
+        userId: user.id,
+        email: user.email
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" } // 👈 importante
+    );
+
+    res.json({
+      token,
+      user: {
+        id: user.id,
+        email: user.email
+      }
+    });
+
+  } catch (error) { 
+
+    res.status(500).json({
+      error: error,
+      detalle: error.message
+    });
+  }
 });
 
 // Obtener todos los usuarios (Para el panel de administración / Swagger)

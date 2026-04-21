@@ -1,5 +1,6 @@
 import Navbar from "../components/ui/Navbar";
 import Link from "next/link"; // 1. Importamos Link de Next.js
+import { fetchWithAuth } from "@/lib/api";
 
 // 1. Definimos las interfaces de lo que nos devuelve el Gateway
 interface Genero {
@@ -23,17 +24,17 @@ interface Pelicula {
 // 2. Función para obtener los datos desde TU GATEWAY
 async function getPeliculas(): Promise<Pelicula[]> {
   try {
-    const res = await fetch('http://gateway-service:8000/api/peliculas', { cache: 'no-store' });
-    
-    if (!res.ok) {
-      console.error("Error en la respuesta del servidor");
-      return [];
-    }
-   
+    // 1. fetchWithAuth ya maneja el Token y el Redirect al login si falla
+    const res = await fetchWithAuth("http://gateway-service:8000/api/peliculas");
+
+    // 2. Si el gateway respondió pero con un error (ej. 500)
+    if (!res.ok) return [];
+
     return res.json();
   } catch (error) {
-    console.error("Error haciendo fetch a las películas:", error);
-    return []; 
+    // 3. Esto solo se ejecuta si el Gateway no responde (está caído)
+    console.error("Error de conexión con el Gateway:", error);
+    return [];
   }
 }
 

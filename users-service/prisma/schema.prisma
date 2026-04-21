@@ -43,7 +43,7 @@ model User {
 model Transaccion {
   id          String   @id @default(uuid())
   usuarioId   String   @map("usuario_id")
-  monto       Float    // Cantidad en dólares
+  monto       Float    // Cantidad
   descripcion String   // Ej: "Comisión por 100 visualizaciones en StreamHub"
   fecha       DateTime @default(now())
 

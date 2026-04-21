@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Navbar from "@/app/components/ui/Navbar";
+import { fetchWithAuth } from "@/lib/api";
 import HeroCarousel from "@/app/components/inicio/HeroCarousel";
 import MovieCard from "@/app/components/inicio/MovieCard";
 import TopMovieCard from "@/app/components/inicio/TopMovieCard";
@@ -24,7 +25,7 @@ const CONTINUE_WATCHING = [
 // --- FETCH DATA ---
 async function getEstrenos() {
   try {
-    const res = await fetch('http://gateway-service:8000/api/peliculas/estrenos', { 
+    const res = await fetchWithAuth('http://gateway-service:8000/api/peliculas/estrenos', { 
       cache: 'no-store' 
     });
     if (!res.ok) return [];
