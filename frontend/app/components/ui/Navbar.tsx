@@ -164,7 +164,7 @@ export default function Navbar() {
       </div>
 
       <div className="flex shrink-0 items-center">
-        <form action={logout} method="post">
+        <form action={logout}>
           <button type="submit" className="inline-flex items-center gap-2 rounded-full bg-[#3a86ff] px-3 py-2 text-sm font-semibold text-white shadow-[0_4px_15px_rgba(58,134,255,0.35)] transition hover:-translate-y-0.5 hover:bg-white hover:text-[#3a86ff] sm:px-4">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
             <span className="hidden sm:inline">Cerrar sesión</span>

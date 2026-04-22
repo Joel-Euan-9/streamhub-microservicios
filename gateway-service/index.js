@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const axios = require('axios');
 const cors = require('cors');
@@ -59,7 +60,7 @@ const STREAM_URL = process.env.STREAM_URL || 'http://streamhub.local/';
  *       200:
  *         description: Lista de películas obtenida con éxito
  */
-app.get('/api/peliculas', authMiddleware, async (req, res) => {
+app.get('/api/peliculas', async (req, res) => {
   try {
     const resp = await axios.get(`${CATALOG_URL}/peliculas`);
     res.json(resp.data);
@@ -79,7 +80,7 @@ app.get('/api/peliculas', authMiddleware, async (req, res) => {
  *       200:
  *         description: Lista de estrenos
  */
-app.get('/api/peliculas/estrenos', authMiddleware, async (req, res) => {
+app.get('/api/peliculas/estrenos', async (req, res) => {
   try {
     const resp = await axios.get(`${CATALOG_URL}/peliculas/estrenos`);
     res.json(resp.data);
@@ -229,7 +230,7 @@ app.get('/api/seguir-viendo/:usuarioId', authMiddleware, async (req, res) => {
  *       200:
  *         description: Lista de usuarios obtenida con éxito
  */
-app.get('/api/usuarios', authMiddleware, async (req, res) => {
+app.get('/api/usuarios', async (req, res) => {
   try {
     // Le pedimos al microservicio de usuarios que nos devuelva todos
     const resp = await axios.get(`${USERS_URL}/usuarios`);
@@ -242,14 +243,14 @@ app.get('/api/usuarios', authMiddleware, async (req, res) => {
 
 /**
  * @swagger
- * /api/usuarios/register
- *  post: 
- *    summary: Crea un nuevo usuario al registrarse
- *    tags: 
- *      -Usuarios
- *    responses: 
- *      200:
- *        description: Usuario registrado exitosamente
+ * /api/usuarios/register:
+ *   post:
+ *     summary: Crea un nuevo usuario al registrarse
+ *     tags:
+ *       - Usuarios
+ *     responses:
+ *       200:
+ *         description: Usuario registrado exitosamente
  */
 
 app.post('/api/auth/register', async (req, res) => {
@@ -263,9 +264,14 @@ app.post('/api/auth/register', async (req, res) => {
 
 /**
  * @swagger
- * /api/usuarios/login
- * post: 
- *   summary: Verifica si un usuario puede ingresar a la platafoma 
+ * /api/usuarios/login:
+ *   post:
+ *     summary: Verifica si un usuario puede ingresar a la plataforma
+ *     tags:
+ *       - Usuarios
+ *     responses:
+ *       200:
+ *         description: Inicio de sesión exitoso
  */
 
 app.post('/api/auth/login', async (req, res) => {
