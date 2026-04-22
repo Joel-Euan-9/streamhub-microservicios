@@ -108,7 +108,7 @@ app.get('/api/peliculas/estrenos', async (req, res) => {
  *       404:
  *         description: Película no encontrada
  */
-app.get('/api/peliculas/:id', authMiddleware, async (req, res) => {
+app.get('/api/peliculas/:id', async (req, res) => {
   try {
     const resp = await axios.get(`${CATALOG_URL}/peliculas/${req.params.id}`);
     let pelicula = resp.data;
