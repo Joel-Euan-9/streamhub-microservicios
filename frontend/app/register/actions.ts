@@ -6,7 +6,8 @@ export async function registerUser(formData: FormData) {
     const password = formData.get("password");
 
     try {
-        const res = await fetch("http://gateway-service:8000/api/auth/register", {
+        const apiUrl = process.env.API_URL || "http://localhost:8000";
+        const res = await fetch(`${apiUrl}/api/auth/register`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
