@@ -59,7 +59,7 @@ export default function MovieHero({ movie }: Props) {
             <div className="flex flex-wrap items-center gap-4 text-sm font-semibold">
               <span className="flex items-center gap-1.5 text-emerald-400"><Star size={18} fill="currentColor" /> 9.2</span>
               <span>•</span>
-              <span className="flex items-center gap-1.5 text-gray-300"><CalendarDays size={18} /> {fechaCompleta}</span>
+              <span suppressHydrationWarning className="flex items-center gap-1.5 text-gray-300"><CalendarDays size={18} /> {fechaCompleta}</span>
               <span>•</span>
               <span className="text-gray-300">{movie.duracion} min</span>
             </div>

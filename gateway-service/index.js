@@ -45,7 +45,7 @@ app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 const CATALOG_URL = process.env.CATALOG_SERVICE_URL || 'http://catalog-service:8000';
 const USERS_URL = process.env.USERS_SERVICE_URL || 'http://users-service:8000';
 const INTERACTIONS_URL = process.env.INTERACTIONS_SERVICE_URL || 'http://interactions-service:8000';
-const STREAM_URL = process.env.STREAM_URL || 'http://streamhub.local/';
+const STREAM_URL = process.env.STREAM_URL || 'http://streamhub.local/media/';
 
 // --- RUTAS DEL GATEWAY ---
 

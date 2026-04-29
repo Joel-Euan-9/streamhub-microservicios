@@ -215,7 +215,7 @@ async function main() {
     data: {
       titulo: 'Cenotes: Ecos del Inframundo',
       descripcion: 'Un viaje documental profundo a los místicos cenotes de Yucatán, explorando su belleza y las leyendas mayas que los rodean.',
-      fechaLanzamiento: new Date('2025-05-12'),
+      fechaLanzamiento: new Date('1999-05-12'),
       duracion: 45,
       rutaCaratula: 'https://images.unsplash.com/photo-1580228491851-f402c01990cc?auto=format&fit=crop&q=80&w=600&h=900',
       rutaVideo: 'cenotes-doc.mp4',
@@ -234,7 +234,7 @@ async function main() {
     data: {
       titulo: 'Código y Café: La vida del desarrollador',
       descripcion: 'Un cortometraje cómico y dramático sobre los retos de un estudiante de ingeniería de software a punto de graduarse y su proyecto final.',
-      fechaLanzamiento: new Date('2026-01-20'),
+      fechaLanzamiento: new Date('1999-01-20'),
       duracion: 32,
       rutaCaratula: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&q=80&w=600&h=900',
       rutaVideo: 'codigo-y-cafe.mp4',
@@ -253,7 +253,7 @@ async function main() {
     data: {
       titulo: 'El Último Tren',
       descripcion: 'Un cortometraje de suspenso psicológico sobre un joven que toma el último tren a casa, pero descubre que no está solo en el vagón.',
-      fechaLanzamiento: new Date('2025-11-03'),
+      fechaLanzamiento: new Date('1999-11-03'),
       duracion: 25,
       rutaCaratula: 'https://images.unsplash.com/photo-1533038676646-7c0abec28fbf?auto=format&fit=crop&q=80&w=600&h=900',
       rutaVideo: 'ultimo-tren.mp4',
@@ -272,7 +272,7 @@ async function main() {
     data: {
       titulo: 'Operación: Fénix',
       descripcion: 'Un proyecto independiente de acción desenfrenada donde un ex-agente debe recuperar unos documentos robados antes del amanecer.',
-      fechaLanzamiento: new Date('2024-08-14'),
+      fechaLanzamiento: new Date('1999-08-14'),
       duracion: 55,
       rutaCaratula: 'https://images.unsplash.com/photo-1500051638674-ff996a0ec29e?auto=format&fit=crop&q=80&w=600&h=900',
       rutaVideo: 'operacion-fenix.mp4',
