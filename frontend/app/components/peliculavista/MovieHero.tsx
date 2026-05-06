@@ -1,10 +1,12 @@
 "use client"; // 1. OBLIGATORIO: Añadimos esto para poder usar useState
 
 import { useState } from 'react';
-import { Play, Star, CalendarDays, Clapperboard, Youtube, X } from 'lucide-react'; // 2. Importamos 'X' para el botón de cerrar
+import { Play, Star, CalendarDays, Youtube, X, Heart } from 'lucide-react'; // 2. Importamos 'X', 'Heart'
+import { toggleFavoriteAction } from '@/app/actions/favoritos';
 
 interface Props {
   movie: {
+    id: string; // Añadido para favoritos
     titulo: string;
     descripcion: string;
     rutaCaratula: string;
@@ -13,12 +15,18 @@ interface Props {
     rutaTrailer: string;
     duracion: number;
     generos?: { nombre: string }[];
-  }
+  };
+  initialIsFavorite?: boolean;
 }
 
-export default function MovieHero({ movie }: Props) {
+export default function MovieHero({ movie, initialIsFavorite = false }: Props) {
   // 3. Estado para controlar si el modal del tráiler está abierto
   const [isTrailerOpen, setIsTrailerOpen] = useState(false);
+  
+  // Estado para Favoritos
+  const [isFavorite, setIsFavorite] = useState(initialIsFavorite);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [isLoadingFav, setIsLoadingFav] = useState(false);
 
   // Formatear fecha completa
   const fechaCompleta = new Date(movie.fechaLanzamiento).toLocaleDateString('es-ES', {
@@ -26,6 +34,25 @@ export default function MovieHero({ movie }: Props) {
     month: 'long',
     year: 'numeric'
   });
+
+  const handleToggleFavorite = async () => {
+    if (isLoadingFav) return;
+    setIsLoadingFav(true);
+    
+    // Optimistic UI (opcional, pero lo haremos con la respuesta real para mayor seguridad)
+    const res = await toggleFavoriteAction(movie.id);
+    
+    if (res.success) {
+      setIsFavorite(res.isFavorite);
+      setToastMessage(res.message);
+      setTimeout(() => setToastMessage(null), 3000); // Ocultar toast a los 3s
+    } else {
+      setToastMessage("Error al actualizar favoritos");
+      setTimeout(() => setToastMessage(null), 3000);
+    }
+    
+    setIsLoadingFav(false);
+  };
 
   // Función para convertir link normal de YT a link de "embed" (reutilizada del reproductor)
   const getEmbedUrl = (url: string) => {
@@ -90,10 +117,30 @@ export default function MovieHero({ movie }: Props) {
                   <Youtube size={24} className="text-red-500" /> Ver Trailer
                 </button>
               )}
+
+              {/* Botón de Favorito */}
+              <button 
+                onClick={handleToggleFavorite}
+                disabled={isLoadingFav}
+                aria-label="Agregar a favoritos"
+                className="flex items-center justify-center w-14 h-14 rounded-full bg-white/10 border border-white/20 hover:bg-white/20 transition-all active:scale-90"
+              >
+                <Heart 
+                  size={26} 
+                  className={`transition-colors duration-300 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-white'}`} 
+                />
+              </button>
             </div>
           </div>
         </div>
       </section>
+
+      {/* TOAST NOTIFICATION */}
+      {toastMessage && (
+        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[110] bg-black/80 backdrop-blur-md border border-white/10 text-white px-6 py-3 rounded-full shadow-2xl animate-bounce">
+          {toastMessage}
+        </div>
+      )}
 
       {/* 5. MODAL DEL TRÁILER */}
       {isTrailerOpen && movie.rutaTrailer && (

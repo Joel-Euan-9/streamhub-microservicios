@@ -384,6 +384,46 @@ app.post('/api/interacciones/votar', authMiddleware, async (req, res) => {
   }
 });
 
+// --- RUTAS DE FAVORITOS ---
+
+/**
+ * @swagger
+ * /api/favoritos/check/{peliculaId}:
+ *   get:
+ *     summary: Verifica si una película está en favoritos
+ *     tags:
+ *       - Favoritos
+ */
+app.get('/api/favoritos/check/:peliculaId', authMiddleware, async (req, res) => {
+  try {
+    const resp = await axios.get(`${USERS_URL}/favoritos/check/${req.user.userId}/${req.params.peliculaId}`);
+    res.json(resp.data);
+  } catch (error) {
+    res.status(500).json({ error: "Error al verificar favorito" });
+  }
+});
+
+/**
+ * @swagger
+ * /api/favoritos/toggle:
+ *   post:
+ *     summary: Alterna el estado de favorito de una película
+ *     tags:
+ *       - Favoritos
+ */
+app.post('/api/favoritos/toggle', authMiddleware, async (req, res) => {
+  try {
+    const payload = {
+      usuarioId: req.user.userId,
+      peliculaId: req.body.peliculaId
+    };
+    const resp = await axios.post(`${USERS_URL}/favoritos/toggle`, payload);
+    res.json(resp.data);
+  } catch (error) {
+    res.status(500).json({ error: "Error al alternar favorito" });
+  }
+});
+
 app.listen(8000, '0.0.0.0', () => {
   console.log('🚀 Gateway running on port 8000');
   console.log('📚 Documentación Swagger disponible en: http://localhost:8000/docs');

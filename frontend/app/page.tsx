@@ -1,5 +1,5 @@
 // 1. ELIMINAMOS el 'use client' de aquí para que sea un Server Component
-import Footer from './components/Footer'
+
 import FAQSection from './components/FaqSection'
 import FeaturesSection from './components/FeaturesSection'
 import DevicesSection from './components/DevicesSection'
@@ -40,7 +40,6 @@ export default async function PrincipalPage() {
         <div id="beneficios"><FeaturesSection /></div>
         <div id="ayuda"><FAQSection /></div>
       </main>
-      <Footer />
     </>
   )
 }

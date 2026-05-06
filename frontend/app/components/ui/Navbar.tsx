@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
-import { logout } from "../../actions/auth"; // Importamos la función de logout
 
 // Definimos lo que necesitamos de la película para el buscador
 interface SearchResult {
@@ -163,13 +162,20 @@ export default function Navbar() {
         </div>
       </div>
 
-      <div className="flex shrink-0 items-center">
-        <form action={logout}>
-          <button type="submit" className="inline-flex items-center gap-2 rounded-full bg-[#3a86ff] px-3 py-2 text-sm font-semibold text-white shadow-[0_4px_15px_rgba(58,134,255,0.35)] transition hover:-translate-y-0.5 hover:bg-white hover:text-[#3a86ff] sm:px-4">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
-            <span className="hidden sm:inline">Cerrar sesión</span>
-          </button>
-        </form>
+      <div className="flex shrink-0 items-center gap-3">
+        <Link href="#" className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-[rgba(255,255,255,0.05)] py-1.5 pl-1.5 pr-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-white/10 sm:pr-4">
+          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-tr from-[#00f2fe] to-[#4facfe] shadow-[0_0_10px_rgba(79,172,254,0.5)]">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0b0c15" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+          </div>
+          <span className="hidden xl:inline">Studio</span>
+        </Link>
+
+        <Link href="/micuenta" className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-[rgba(255,255,255,0.05)] py-1.5 pl-1.5 pr-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-white/10 sm:pr-4">
+          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-tr from-[#00f2fe] to-[#4facfe] shadow-[0_0_10px_rgba(79,172,254,0.5)]">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0b0c15" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </div>
+          <span className="hidden xl:inline">Mi cuenta</span>
+        </Link>
       </div>
     </nav>
   );

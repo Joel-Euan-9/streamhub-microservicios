@@ -186,4 +186,58 @@ app.post('/billetera/comision', async (req, res) => {
   }
 });
 
+// --- FAVORITOS ---
+
+// Verificar si una película es favorita
+app.get('/favoritos/check/:usuarioId/:peliculaId', async (req, res) => {
+  try {
+    const { usuarioId, peliculaId } = req.params;
+    const favorito = await prisma.favorito.findUnique({
+      where: {
+        usuarioId_peliculaId: { usuarioId, peliculaId }
+      }
+    });
+    res.json({ isFavorite: !!favorito });
+  } catch (error) {
+    console.error("Error check favorito:", error);
+    res.status(500).json({ error: "Error verificando favorito" });
+  }
+});
+
+// Alternar favorito (agregar o eliminar)
+app.post('/favoritos/toggle', async (req, res) => {
+  try {
+    console.log("BODY REQ FAVORITOS TOGGLE:", req.body);
+    const { usuarioId, peliculaId } = req.body;
+    
+    // Verificar si existe
+    const existente = await prisma.favorito.findUnique({
+      where: {
+        usuarioId_peliculaId: { usuarioId, peliculaId }
+      }
+    });
+
+    if (existente) {
+      // Eliminar
+      await prisma.favorito.delete({
+        where: {
+          usuarioId_peliculaId: { usuarioId, peliculaId }
+        }
+      });
+      console.log("Favorito eliminado");
+      return res.json({ isFavorite: false, message: "Eliminado de favoritos" });
+    } else {
+      // Crear
+      await prisma.favorito.create({
+        data: { usuarioId, peliculaId }
+      });
+      console.log("Favorito agregado");
+      return res.json({ isFavorite: true, message: "Agregado a favoritos" });
+    }
+  } catch (error) {
+    console.error("Error toggle favorito:", error);
+    res.status(500).json({ error: "Error alternando favorito", detalle: error.message });
+  }
+});
+
 app.listen(8000, () => console.log('Users Service running on port 8000'));
