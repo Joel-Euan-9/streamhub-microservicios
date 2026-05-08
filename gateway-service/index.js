@@ -279,7 +279,7 @@ app.post('/api/auth/login', async (req, res) => {
     const resp = await axios.post(`${USERS_URL}/login`, req.body);
     res.json(resp.data);
   } catch (error) {
-    res.status(500).json({ error: "Error al inciar sesión" })
+    res.status(500).json({ error: "Correo o contraseña incorrectos" })
   }
 })
 

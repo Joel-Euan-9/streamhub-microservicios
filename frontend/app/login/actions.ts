@@ -36,14 +36,12 @@ export async function loginUser(formData: FormData) {
             path: "/"
         });
 
-        success = true
+        return { success: true };
 
     } catch (error: any) {
         console.error("LOGIN ERROR:", error);
         return { error: "Error de conexión" };
     }
 
-    if (success) {
-        redirect("/inicio");
-    }
+
 }

@@ -1,54 +1,71 @@
+import * as React from "react";
+// Importamos una utilidad para clases condicionales. Si no la tienes, ver abajo.
+import { cn } from "@/lib/utils"; 
 
-import React, { useState } from "react";
+// Icono de advertencia de error (SVG)
+const ErrorIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={1.5}
+    className="w-4 h-4 mr-1 text-red-500 flex-shrink-0"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z"
+    />
+  </svg>
+);
 
-interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
-
-    label: string;
-
+export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  label: string;
+  error?: string; // Propiedad para pasar el mensaje de error
 }
 
-export const Input = ({
-    label,
-    className = "",
-    placeholder = " ",
-    id,
-    ...props
-}: InputProps) => {
-    const inputId = id || label.replace(/\s+/g, '-').toLowerCase();
-
+// Usamos forwardRef para integrarlo con React Hook Form
+const Input = React.forwardRef<HTMLInputElement, InputProps>(
+  ({ className, type, label, error, ...props }, ref) => {
     return (
-        <div className="w-full">
-            <div className="relative flex items-center">
-                <input
-                    {...props}
-                    id={inputId}
-                    placeholder={placeholder}
-                    className={`
-                        peer block w-full px-4 h-12 rounded-md
-                        text-white border border-gray-500 font-medium 
-                        appearance-none focus:outline-none focus:ring-1 focus:border-white
-                        transition-all duration-200
-                        text-sm bg-transparent
-                        pt-4 /* Un poco de padding arriba para bajar el texto sutilmente */
-                        ${className}
-                    `}
-                />
-
-                <label
-                    htmlFor={inputId}
-                    className={`
-                        absolute text-gray-500 duration-200 transform font-semibold text-sm
-                        left-4 pointer-events-none
-                        /* Centrado vertical inicial */
-                        top-1/2 -translate-y-1/2 scale-100 (scale-80) */
-                        peer-focus:top-2 peer-focus:translate-y-0 peer-focus:scale-75
-                        peer-[:not(:placeholder-shown)]:top-2 peer-[:not(:placeholder-shown)]:translate-y-0 peer-[:not(:placeholder-shown)]:scale-75
-                        origin-[0]
-                    `}
-                >
-                    {label}
-                </label>
-            </div>
-        </div>
+      <div className="flex flex-col space-y-1.5 w-full">
+        
+        {/* 1. Estilo del Label: Se vuelve rojo si hay error */}
+        <label 
+          className={cn(
+            "text-sm font-medium transition-colors duration-200",
+            error ? "text-red-500" : "text-white/70"
+          )}
+        >
+          {label}
+        </label>
+        
+        {/* 2. Estilo del Input: Borde rojo si hay error */}
+        <input
+          type={type}
+          className={cn(
+            // Clases base
+            "flex h-10 w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white transition-all duration-200 focus:outline-none focus:ring-1 focus:ring-blue-400 disabled:cursor-not-allowed disabled:opacity-50",
+            // Clases de error
+            error && "border-red-500 focus:ring-red-500 placeholder:text-red-500", 
+            className
+          )}
+          ref={ref}
+          {...props}
+        />
+        
+        {/* 3. Estilo del Mensaje de Error: Incluye el icono */}
+        {error && (
+          <div className="flex items-start text-xs text-red-500 mt-1 transition-all duration-200">
+            <ErrorIcon />
+            <p>{error}</p>
+          </div>
+        )}
+      </div>
     );
-};
+  }
+);
+Input.displayName = "Input";
+
+export { Input };
