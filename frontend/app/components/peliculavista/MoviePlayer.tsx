@@ -3,15 +3,20 @@
 
 import { useRef, useState, useEffect } from 'react';
 import { Play, Pause, RotateCcw, RotateCw, Volume2, VolumeX, Maximize, Minimize } from 'lucide-react';
+import { saveProgressAction } from '@/app/actions/historial';
 
 interface Props {
   videoUrl: string;
   posterUrl: string;
+  peliculaId?: string;
+  initialTime?: number;
 }
 
-export default function MoviePlayer({ videoUrl, posterUrl }: Props) {
+export default function MoviePlayer({ videoUrl, posterUrl, peliculaId, initialTime = 0 }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null); // Referencia para el temporizador
+  const initialTimeSetRef = useRef(false);
+  const lastSavedTimeRef = useRef(-1);
   
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -147,11 +152,29 @@ export default function MoviePlayer({ videoUrl, posterUrl }: Props) {
     };
   }, []);
 
+  const saveProgress = async (time: number, dur: number) => {
+    if (!peliculaId || time === lastSavedTimeRef.current) return;
+    lastSavedTimeRef.current = time;
+    const isCompleted = dur > 0 && (time / dur) >= 0.95;
+    await saveProgressAction(peliculaId, Math.floor(time), isCompleted);
+  };
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isPlaying && duration > 0) {
+      interval = setInterval(() => {
+        if (videoRef.current) saveProgress(videoRef.current.currentTime, duration);
+      }, 10000);
+    }
+    return () => clearInterval(interval);
+  }, [isPlaying, duration, peliculaId]);
+
   const togglePlay = () => {
     if (videoRef.current) {
       if (isPlaying) {
         videoRef.current.pause();
         setShowControls(true); // Mostrar controles al pausar
+        saveProgress(videoRef.current.currentTime, duration); // Guardar progreso al pausar
       } else {
         videoRef.current.play();
       }
@@ -168,6 +191,11 @@ export default function MoviePlayer({ videoUrl, posterUrl }: Props) {
   const handleLoadedMetadata = () => {
     if (videoRef.current) {
       setDuration(videoRef.current.duration);
+      if (initialTime > 0 && !initialTimeSetRef.current) {
+        videoRef.current.currentTime = initialTime;
+        setCurrentTime(initialTime);
+        initialTimeSetRef.current = true;
+      }
     }
   };
 

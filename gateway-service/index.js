@@ -158,6 +158,7 @@ app.get('/api/peliculas/:id', async (req, res) => {
  */
 app.post('/api/historial', authMiddleware, async (req, res) => {
   try {
+    req.body.usuarioId = req.user.userId;
     const resp = await axios.post(`${USERS_URL}/historial`, req.body);
     res.json(resp.data);
   } catch (error) {
@@ -167,25 +168,19 @@ app.post('/api/historial', authMiddleware, async (req, res) => {
 
 /**
  * @swagger
- * /api/seguir-viendo/{usuarioId}:
+ * /api/historial:
  *   get:
  *     summary: Obtiene las películas que el usuario dejó a medias
  *     tags:
  *       - Seguir Viendo
- *     parameters:
- *       - in: path
- *         name: usuarioId
- *         required: true
- *         schema:
- *           type: string
  *     responses:
  *       200:
  *         description: Lista combinada de historial y detalles de películas
  */
-app.get('/api/seguir-viendo/:usuarioId', authMiddleware, async (req, res) => {
+app.get('/api/historial', authMiddleware, async (req, res) => {
   try {
 
-    const historialResp = await axios.get(`${USERS_URL}/historial/${req.params.usuarioId}`);
+    const historialResp = await axios.get(`${USERS_URL}/historial/${req.user.userId}`);
     const historial = historialResp.data;
 
     if (historial.length === 0) {
@@ -214,6 +209,40 @@ app.get('/api/seguir-viendo/:usuarioId', authMiddleware, async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Error componiendo historial" });
+  }
+});
+
+/**
+ * @swagger
+ * /api/historial/{peliculaId}:
+ *   get:
+ *     summary: Obtiene el progreso de una película para el usuario actual
+ *     tags:
+ *       - Historial
+ */
+app.get('/api/historial/:peliculaId', authMiddleware, async (req, res) => {
+  try {
+    const resp = await axios.get(`${USERS_URL}/historial/${req.user.userId}/${req.params.peliculaId}`);
+    res.json(resp.data);
+  } catch (error) {
+    res.status(500).json({ error: "Error al obtener progreso de la película" });
+  }
+});
+
+/**
+ * @swagger
+ * /api/historial:
+ *   delete:
+ *     summary: Borra el historial del usuario actual
+ *     tags:
+ *       - Historial
+ */
+app.delete('/api/historial', authMiddleware, async (req, res) => {
+  try {
+    const resp = await axios.delete(`${USERS_URL}/historial/${req.user.userId}`);
+    res.json(resp.data);
+  } catch (error) {
+    res.status(500).json({ error: "Error al limpiar el historial" });
   }
 });
 

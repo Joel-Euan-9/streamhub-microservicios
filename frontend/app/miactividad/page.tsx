@@ -1,83 +1,15 @@
 import Navbar from "@/app/components/ui/Navbar";
 import HistorialCarousel from "@/app/components/miactividad/HistorialCarousel";
 import FavoritosGrid from "@/app/components/miactividad/FavoritosGrid";
+import LimpiarHistorialBoton from "@/app/components/miactividad/LimpiarHistorialBoton";
 import type { Metadata } from "next";
+import { fetchWithAuth } from "@/lib/api";
+import { getHistorialAction } from "@/app/actions/historial";
 
 export const metadata: Metadata = {
   title: "Mi Actividad | StreamHub",
   description: "Revisa tu historial de películas vistas y gestiona tus favoritos en StreamHub.",
 };
-
-// ─── MOCK DATA ────────────────────────────────────────────────────────────────
-// Historial: de más reciente (índice 0) a más antigua (último)
-const HISTORIAL = [
-  {
-    id: "1",
-    title: "Oppenheimer",
-    img: "https://images.unsplash.com/photo-1608889175123-8ee362201f81?q=80&w=400&auto=format&fit=crop",
-    progress: 100,
-    watchedAt: "Hace 1 hora",
-    genre: "Drama / Historia",
-  },
-  {
-    id: "2",
-    title: "Dune: Parte Dos",
-    img: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?q=80&w=400&auto=format&fit=crop",
-    progress: 68,
-    watchedAt: "Hace 3 horas",
-    genre: "Sci-Fi / Aventura",
-  },
-  {
-    id: "3",
-    title: "La Zona de Interés",
-    img: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=400&auto=format&fit=crop",
-    progress: 100,
-    watchedAt: "Ayer",
-    genre: "Drama / Guerra",
-  },
-  {
-    id: "4",
-    title: "Pobres Criaturas",
-    img: "https://images.unsplash.com/photo-1518676590629-3dcbd9c5a5c9?q=80&w=400&auto=format&fit=crop",
-    progress: 45,
-    watchedAt: "Hace 2 días",
-    genre: "Fantasía / Drama",
-  },
-  {
-    id: "5",
-    title: "Past Lives",
-    img: "https://images.unsplash.com/photo-1560759226-14da22a643ef?q=80&w=400&auto=format&fit=crop",
-    progress: 100,
-    watchedAt: "Hace 3 días",
-    genre: "Romance / Drama",
-  },
-  {
-    id: "6",
-    title: "Maestro",
-    img: "https://images.unsplash.com/photo-1520423465871-0866049bfbf9?q=80&w=400&auto=format&fit=crop",
-    progress: 100,
-    watchedAt: "Hace 4 días",
-    genre: "Biográfica / Drama",
-  },
-  {
-    id: "7",
-    title: "El Conde",
-    img: "https://images.unsplash.com/photo-1531259683007-016a7b628fc3?q=80&w=400&auto=format&fit=crop",
-    progress: 22,
-    watchedAt: "Hace 5 días",
-    genre: "Sátira / Terror",
-  },
-  {
-    id: "8",
-    title: "Ferrari",
-    img: "https://images.unsplash.com/photo-1616788494672-ec7ca25fdda9?q=80&w=400&auto=format&fit=crop",
-    progress: 100,
-    watchedAt: "Hace 1 semana",
-    genre: "Acción / Biográfica",
-  },
-];
-
-import { fetchWithAuth } from "@/lib/api";
 
 // ─── DATA FETCHING ────────────────────────────────────────────────────────────
 async function getFavoritos() {
@@ -95,7 +27,7 @@ async function getFavoritos() {
       title: item.pelicula?.titulo || 'Película Desconocida',
       img: item.pelicula?.rutaCaratula || 'https://via.placeholder.com/400x600?text=No+Image',
       year: item.pelicula?.fechaLanzamiento ? new Date(item.pelicula.fechaLanzamiento).getFullYear().toString() : 'N/A',
-      genre: item.pelicula?.generos?.[0]?.nombre || 'Varios',
+      genre: item.pelicula?.generos?.slice(0, 2).map((g: any) => g.nombre).join(' / ') || 'Varios',
     }));
   } catch (error) {
     console.error("Error cargando favoritos:", error);
@@ -106,6 +38,39 @@ async function getFavoritos() {
 // ─── PAGE ──────────────────────────────────────────────────────────────────────
 export default async function MiActividadPage() {
   const favoritosReales = await getFavoritos();
+  const rawHistorial = await getHistorialAction();
+  
+  const historialFormateado = rawHistorial.map((item: any) => {
+    const pelicula = item.pelicula || {};
+    let progress = 0;
+    
+    if (item.completada) {
+      progress = 100;
+    } else if (pelicula.duracion && item.minutoPausa) {
+      const durationSeconds = pelicula.duracion * 60;
+      progress = Math.floor((item.minutoPausa / durationSeconds) * 100);
+      if (progress > 100) progress = 100;
+    }
+  
+    const lastView = new Date(item.ultimaVezVisto);
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - lastView.getTime());
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    let watchedAt = "Recientemente";
+    if (diffDays === 0) watchedAt = "Hoy";
+    else if (diffDays === 1) watchedAt = "Ayer";
+    else if (diffDays > 1) watchedAt = `Hace ${diffDays} días`;
+  
+    return {
+      id: item.peliculaId,
+      title: pelicula.titulo || 'Desconocido',
+      img: pelicula.rutaCaratula || 'https://via.placeholder.com/400x600?text=No+Image',
+      progress: progress,
+      watchedAt: watchedAt,
+      genre: pelicula.generos?.slice(0, 2).map((g: any) => g.nombre).join(' / ') || 'Varios',
+    };
+  });
+
   return (
     <>
       <Navbar />
@@ -139,7 +104,7 @@ export default async function MiActividadPage() {
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3a86ff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
                 </svg>
-                <span className="text-xs font-semibold text-white">{HISTORIAL.length} vistas recientes</span>
+                <span className="text-xs font-semibold text-white">{historialFormateado.length} vistas recientes</span>
               </div>
               <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-4 py-2">
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="#ef4444" stroke="#ef4444" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -164,15 +129,10 @@ export default async function MiActividadPage() {
                   <p className="text-xs text-[#aeb4c0] mt-0.5">Desde la última película hasta la primera que viste</p>
                 </div>
               </div>
-              <button className="hidden sm:flex items-center gap-1.5 text-xs text-[#aeb4c0] hover:text-red-400 transition border border-white/10 hover:border-red-500/30 rounded-full px-3 py-1.5">
-                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/>
-                </svg>
-                Limpiar historial
-              </button>
+              <LimpiarHistorialBoton />
             </div>
 
-            <HistorialCarousel items={HISTORIAL} />
+            <HistorialCarousel items={historialFormateado} />
           </section>
 
           {/* Divider */}

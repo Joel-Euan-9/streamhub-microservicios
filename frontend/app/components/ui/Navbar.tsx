@@ -76,6 +76,7 @@ export default function Navbar() {
 
   const isInicio = pathname === "/inicio";
   const isPeliculas = pathname === "/peliculas";
+  const isGeneros = pathname === "/generos";
   const isActividad = pathname === "/miactividad";
 
   return (
@@ -102,6 +103,7 @@ export default function Navbar() {
         <ul className={`fixed left-0 top-[72px] z-40 flex h-[calc(100vh-72px)] w-full flex-col items-center justify-center gap-10 border-t border-white/5 bg-[rgba(11,12,21,0.98)] backdrop-blur-2xl transition-transform duration-300 md:static md:h-auto md:w-auto md:flex-row md:justify-start md:gap-6 md:border-0 md:bg-transparent md:backdrop-blur-0 ${open ? "translate-x-0" : "-translate-x-full md:translate-x-0"}`}>
           <li><Link href="/inicio" className={`text-xl font-semibold transition md:text-base ${isInicio ? "text-white drop-shadow-[0_0_8px_#3a86ff]" : "text-[#aeb4c0] hover:text-white hover:drop-shadow-[0_0_8px_#3a86ff]"}`}>Inicio</Link></li>
           <li><Link href="/peliculas" className={`text-xl font-semibold transition md:text-base ${isPeliculas ? "text-white drop-shadow-[0_0_8px_#3a86ff]" : "text-[#aeb4c0] hover:text-white hover:drop-shadow-[0_0_8px_#3a86ff]"}`}>Películas</Link></li>
+          <li><Link href="/generos" className={`text-xl font-semibold transition md:text-base ${isGeneros ? "text-white drop-shadow-[0_0_8px_#3a86ff]" : "text-[#aeb4c0] hover:text-white hover:drop-shadow-[0_0_8px_#3a86ff]"}`}>Géneros</Link></li>
           <li><Link href="/miactividad" className={`text-xl font-semibold transition md:text-base ${isActividad ? "text-white drop-shadow-[0_0_8px_#3a86ff]" : "text-[#aeb4c0] hover:text-white hover:drop-shadow-[0_0_8px_#3a86ff]"}`}>Mi Actividad</Link></li>
         </ul>
       </div>

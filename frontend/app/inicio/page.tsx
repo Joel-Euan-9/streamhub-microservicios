@@ -7,19 +7,20 @@ import TopMovieCard from "@/app/components/inicio/TopMovieCard";
 import GenreCard from "@/app/components/inicio/GenreCard";
 import ContinueCard from "@/app/components/inicio/ContinueCard";
 import CarouselContainer from "@/app/components/inicio/CarouselContainer";
+import { getHistorialAction } from "@/app/actions/historial";
 
 // --- DATOS ESTATICOS (Mocks para secciones que aún no tienen API) ---
 const GENRES = [
-  { name: "Acción", href: "#", bg: "from-red-900/70 to-red-600/80" },
-  { name: "Comedia", href: "#", bg: "from-yellow-900/70 to-yellow-600/80" },
-  { name: "Drama", href: "#", bg: "from-blue-900/70 to-blue-600/80" },
-  { name: "Sci-Fi", href: "#", bg: "from-purple-900/70 to-purple-600/80" },
-  { name: "Terror", href: "#", bg: "from-zinc-900/70 to-zinc-600/80" }
-];
-
-const CONTINUE_WATCHING = [
-  { title: "La Trampa", remaining: "Quedan 20 min", img: "https://images.unsplash.com/photo-1485846234645-a62644f84728?q=80&w=200&auto=format&fit=crop", progress: 45 },
-  { title: "Secretos", remaining: "Quedan 5 min", img: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=200&auto=format&fit=crop", progress: 80 }
+  { name: "Acción", href: "/generos?genre=Acción", bg: "from-red-900/80 to-red-600/90" },
+  { name: "Comedia", href: "/generos?genre=Comedia", bg: "from-yellow-900/80 to-yellow-600/90" },
+  { name: "Drama", href: "/generos?genre=Drama", bg: "from-blue-900/80 to-blue-600/90" },
+  { name: "Sci-Fi", href: "/generos?genre=Ciencia Ficción", bg: "from-purple-900/80 to-purple-600/90" },
+  { name: "Terror", href: "/generos?genre=Terror", bg: "from-zinc-900/80 to-zinc-600/90" },
+  { name: "Fantasía", href: "/generos?genre=Fantasía", bg: "from-emerald-900/80 to-emerald-600/90" },
+  { name: "Romance", href: "/generos?genre=Romance", bg: "from-pink-900/80 to-pink-600/90" },
+  { name: "Aventura", href: "/generos?genre=Aventura", bg: "from-orange-900/80 to-orange-600/90" },
+  { name: "Misterio", href: "/generos?genre=Misterio", bg: "from-indigo-900/80 to-indigo-600/90" },
+  { name: "Animación", href: "/generos?genre=Animación", bg: "from-sky-900/80 to-sky-600/90" },
 ];
 
 // --- FETCH DATA ---
@@ -39,6 +40,9 @@ async function getEstrenos() {
 export default async function InicioPage() {
   const peliculas = await getEstrenos();
   const peliculasHero = peliculas.slice(0, 4);
+
+  const historialRes = await getHistorialAction();
+  const historial = Array.isArray(historialRes) ? historialRes.slice(0, 10) : [];
 
   return (
     <>
@@ -85,12 +89,33 @@ export default async function InicioPage() {
             </CarouselContainer>
           </section>
 
-          {/* SECCIÓN: SEGUIR VIENDO (Usando CarouselContainer) */}
-          <CarouselContainer title="Seguir Viendo">
-            {CONTINUE_WATCHING.map((movie) => (
-              <ContinueCard key={movie.title} {...movie} />
-            ))}
-          </CarouselContainer>
+          {/* SECCIÓN: SEGUIR VIENDO */}
+          {historial.length > 0 && (
+            <CarouselContainer title="Seguir Viendo">
+              {historial.map((item: any) => {
+                const durationSeconds = (item.pelicula?.duracion || 120) * 60;
+                let progress = Math.floor((item.minutoPausa / durationSeconds) * 100);
+                if (progress > 100) progress = 100;
+
+                const remainingSeconds = Math.max(0, durationSeconds - item.minutoPausa);
+                const remainingMinutes = Math.ceil(remainingSeconds / 60);
+                
+                const isCompleted = item.completada || remainingMinutes <= 0 || progress >= 95;
+                const remainingText = isCompleted ? "Completada" : `Quedan ${remainingMinutes} min`;
+
+                return (
+                  <ContinueCard 
+                    key={item.pelicula.id || item.id} 
+                    id={item.pelicula.id}
+                    title={item.pelicula.titulo} 
+                    remaining={remainingText}
+                    img={item.pelicula.rutaCaratula} 
+                    progress={progress} 
+                  />
+                );
+              })}
+            </CarouselContainer>
+          )}
 
         </div>
       </main>

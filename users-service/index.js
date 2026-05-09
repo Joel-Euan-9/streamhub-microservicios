@@ -32,6 +32,38 @@ app.get('/historial/:usuarioId', async (req, res) => {
   res.json(historial);
 });
 
+// Obtener el minuto de pausa de una película específica
+app.get('/historial/:usuarioId/:peliculaId', async (req, res) => {
+  try {
+    const visualizacion = await prisma.visualizacion.findUnique({
+      where: {
+        usuarioId_peliculaId: {
+          usuarioId: req.params.usuarioId,
+          peliculaId: req.params.peliculaId
+        }
+      }
+    });
+    if (!visualizacion) {
+      return res.json({ minutoPausa: 0, completada: false });
+    }
+    res.json(visualizacion);
+  } catch (error) {
+    res.status(500).json({ error: "Error al obtener historial de la película" });
+  }
+});
+
+// Borrar todo el historial de un usuario
+app.delete('/historial/:usuarioId', async (req, res) => {
+  try {
+    await prisma.visualizacion.deleteMany({
+      where: { usuarioId: req.params.usuarioId }
+    });
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: "Error al limpiar historial" });
+  }
+});
+
 // Crear usuario (simplificado)
 
 app.post('/register', async (req, res) => {

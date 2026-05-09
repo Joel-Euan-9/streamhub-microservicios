@@ -1,13 +1,16 @@
+import Link from "next/link";
+
 interface ContinueCardProps {
+  id: string;
   title: string;
   remaining: string;
   img: string;
   progress: number; // Porcentaje de 0 a 100
 }
 
-export default function ContinueCard({ title, remaining, img, progress }: ContinueCardProps) {
+export default function ContinueCard({ id, title, remaining, img, progress }: ContinueCardProps) {
   return (
-    <div className="group w-[160px] shrink-0 cursor-pointer sm:w-[180px] md:w-[200px]">
+    <Link href={`/peliculas/${id}`} className="group w-[160px] shrink-0 cursor-pointer sm:w-[180px] md:w-[200px]">
       <div className="relative aspect-[2/3] overflow-hidden rounded-xl shadow-[0_5px_15px_rgba(0,0,0,0.3)]">
         <img
           src={img}
@@ -33,6 +36,6 @@ export default function ContinueCard({ title, remaining, img, progress }: Contin
         <h3 className="truncate text-base font-semibold text-white">{title}</h3>
         <p className="text-sm text-[#aeb4c0]">{remaining}</p>
       </div>
-    </div>
+    </Link>
   );
 }

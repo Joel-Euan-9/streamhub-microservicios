@@ -34,7 +34,8 @@ app.get('/peliculas/estrenos', async (req, res) => {
 app.post('/peliculas/batch', async (req, res) => {
   const { ids } = req.body;
   const peliculas = await prisma.pelicula.findMany({
-    where: { id: { in: ids } }
+    where: { id: { in: ids } },
+    include: { generos: true }
   });
   res.json(peliculas);
 });
