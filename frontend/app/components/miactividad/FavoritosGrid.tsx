@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { toggleFavoriteAction } from '@/app/actions/favoritos'
 
 interface FavoritoItem {
   id: string
@@ -19,15 +20,27 @@ export default function FavoritosGrid({ items }: Props) {
   const [favoritos, setFavoritos] = useState<FavoritoItem[]>(items)
   const [removingId, setRemovingId] = useState<string | null>(null)
 
-  const handleUnfavorite = (e: React.MouseEvent, id: string) => {
+  const handleUnfavorite = async (e: React.MouseEvent, id: string) => {
     e.preventDefault()
     e.stopPropagation()
     setRemovingId(id)
-    // Espera a que la animación de salida termine y luego elimina
-    setTimeout(() => {
-      setFavoritos((prev) => prev.filter((f) => f.id !== id))
-      setRemovingId(null)
-    }, 400)
+    
+    try {
+      const res = await toggleFavoriteAction(id);
+      if (res.success && !res.isFavorite) {
+        // Espera a que la animación de salida termine y luego elimina
+        setTimeout(() => {
+          setFavoritos((prev) => prev.filter((f) => f.id !== id))
+          setRemovingId(null)
+        }, 400)
+      } else {
+        // Falló o no lo quitó
+        setRemovingId(null);
+      }
+    } catch (error) {
+      console.error("Error quitando favorito:", error);
+      setRemovingId(null);
+    }
   }
 
   if (favoritos.length === 0) {

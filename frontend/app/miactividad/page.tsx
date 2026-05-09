@@ -77,110 +77,45 @@ const HISTORIAL = [
   },
 ];
 
-// Favoritos: cuadrícula estilo TikTok
-const FAVORITOS = [
-  {
-    id: "10",
-    title: "Oppenheimer",
-    img: "https://images.unsplash.com/photo-1608889175123-8ee362201f81?q=80&w=400&auto=format&fit=crop",
-    year: "2023",
-    genre: "Drama",
-  },
-  {
-    id: "11",
-    title: "Dune: Parte Dos",
-    img: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?q=80&w=400&auto=format&fit=crop",
-    year: "2024",
-    genre: "Sci-Fi",
-  },
-  {
-    id: "12",
-    title: "Spider-Man: No Way Home",
-    img: "https://images.unsplash.com/photo-1635805737707-575885ab0820?q=80&w=400&auto=format&fit=crop",
-    year: "2021",
-    genre: "Acción",
-  },
-  {
-    id: "13",
-    title: "Interstellar",
-    img: "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?q=80&w=400&auto=format&fit=crop",
-    year: "2014",
-    genre: "Sci-Fi",
-  },
-  {
-    id: "14",
-    title: "The Batman",
-    img: "https://images.unsplash.com/photo-1531259683007-016a7b628fc3?q=80&w=400&auto=format&fit=crop",
-    year: "2022",
-    genre: "Acción",
-  },
-  {
-    id: "15",
-    title: "Pobres Criaturas",
-    img: "https://images.unsplash.com/photo-1518676590629-3dcbd9c5a5c9?q=80&w=400&auto=format&fit=crop",
-    year: "2023",
-    genre: "Fantasía",
-  },
-  {
-    id: "16",
-    title: "Past Lives",
-    img: "https://images.unsplash.com/photo-1560759226-14da22a643ef?q=80&w=400&auto=format&fit=crop",
-    year: "2023",
-    genre: "Romance",
-  },
-  {
-    id: "17",
-    title: "La La Land",
-    img: "https://images.unsplash.com/photo-1520423465871-0866049bfbf9?q=80&w=400&auto=format&fit=crop",
-    year: "2016",
-    genre: "Musical",
-  },
-  {
-    id: "18",
-    title: "Everything Everywhere",
-    img: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=400&auto=format&fit=crop",
-    year: "2022",
-    genre: "Comedia",
-  },
-  {
-    id: "19",
-    title: "Tár",
-    img: "https://images.unsplash.com/photo-1485846234645-a62644f84728?q=80&w=400&auto=format&fit=crop",
-    year: "2022",
-    genre: "Drama",
-  },
-  {
-    id: "20",
-    title: "The Whale",
-    img: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=400&auto=format&fit=crop",
-    year: "2022",
-    genre: "Drama",
-  },
-  {
-    id: "21",
-    title: "Ferrari",
-    img: "https://images.unsplash.com/photo-1616788494672-ec7ca25fdda9?q=80&w=400&auto=format&fit=crop",
-    year: "2023",
-    genre: "Biográfica",
-  },
-];
+import { fetchWithAuth } from "@/lib/api";
+
+// ─── DATA FETCHING ────────────────────────────────────────────────────────────
+async function getFavoritos() {
+  try {
+    const res = await fetchWithAuth('http://gateway-service:8000/api/favoritos', { 
+      cache: 'no-store' 
+    });
+    if (!res.ok) return [];
+    
+    const data = await res.json();
+    
+    // Map the backend data to match the FavoritoItem interface expected by FavoritosGrid
+    return data.map((item: any) => ({
+      id: item.peliculaId,
+      title: item.pelicula?.titulo || 'Película Desconocida',
+      img: item.pelicula?.rutaCaratula || 'https://via.placeholder.com/400x600?text=No+Image',
+      year: item.pelicula?.fechaLanzamiento ? new Date(item.pelicula.fechaLanzamiento).getFullYear().toString() : 'N/A',
+      genre: item.pelicula?.generos?.[0]?.nombre || 'Varios',
+    }));
+  } catch (error) {
+    console.error("Error cargando favoritos:", error);
+    return [];
+  }
+}
 
 // ─── PAGE ──────────────────────────────────────────────────────────────────────
-export default function MiActividadPage() {
+export default async function MiActividadPage() {
+  const favoritosReales = await getFavoritos();
   return (
     <>
       <Navbar />
 
-      <main className="min-h-screen bg-[#020817] text-white pt-[72px] md:pt-20">
+      <main className="min-h-screen bg-[#0b0c15] text-white pt-[72px] md:pt-20">
         
         {/* ── HERO BANNER ───────────────────────────────────────────────────── */}
-        <div className="relative overflow-hidden border-b border-white/5">
-          {/* Fondo degradado animado */}
-          <div className="absolute inset-0 bg-gradient-to-br from-[#0d1b3e] via-[#020817] to-[#0a0a1a]" />
-          <div className="absolute inset-0 opacity-30">
-            <div className="absolute top-0 left-1/4 w-96 h-96 rounded-full bg-[#3a86ff]/20 blur-[100px]" />
-            <div className="absolute bottom-0 right-1/4 w-72 h-72 rounded-full bg-[#00f2fe]/10 blur-[80px]" />
-          </div>
+        <div className="relative overflow-hidden border-b border-white/5 bg-[#0b0c15]">
+          {/* Subtle glow behind the icon, matched to the site's primary accent color but very dark */}
+          <div className="absolute top-1/2 left-10 -translate-y-1/2 w-64 h-64 rounded-full bg-[#3a86ff]/5 blur-[80px] pointer-events-none" />
 
           <div className="relative z-10 px-5 md:px-10 py-12 md:py-16">
             <div className="flex items-center gap-4 mb-3">
@@ -210,7 +145,7 @@ export default function MiActividadPage() {
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="#ef4444" stroke="#ef4444" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
                 </svg>
-                <span className="text-xs font-semibold text-white">{FAVORITOS.length} favoritos</span>
+                <span className="text-xs font-semibold text-white">{favoritosReales.length} favoritos</span>
               </div>
             </div>
           </div>
@@ -255,7 +190,7 @@ export default function MiActividadPage() {
               </div>
             </div>
 
-            <FavoritosGrid items={FAVORITOS} />
+            <FavoritosGrid items={favoritosReales} />
           </section>
 
         </div>

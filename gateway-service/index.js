@@ -384,6 +384,109 @@ app.post('/api/interacciones/votar', authMiddleware, async (req, res) => {
   }
 });
 
+// --- RUTAS DE PERFIL ---
+
+/**
+ * @swagger
+ * /api/perfil:
+ *   get:
+ *     summary: Obtiene el perfil del usuario autenticado
+ *     tags:
+ *       - Perfil
+ */
+app.get('/api/perfil', authMiddleware, async (req, res) => {
+  try {
+    const resp = await axios.get(`${USERS_URL}/profile/${req.user.userId}`);
+    res.json(resp.data);
+  } catch (error) {
+    if (error.response && error.response.status === 404) {
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    }
+    res.status(500).json({ error: "Error al obtener el perfil" });
+  }
+});
+
+/**
+ * @swagger
+ * /api/perfil/name:
+ *   put:
+ *     summary: Cambia el nombre del usuario autenticado
+ *     tags:
+ *       - Perfil
+ */
+app.put('/api/perfil/name', authMiddleware, async (req, res) => {
+  try {
+    console.log("BODY EN GATEWAY (name):", req.body, "USER ID:", req.user.userId);
+    const resp = await axios.put(`${USERS_URL}/profile/name/${req.user.userId}`, req.body);
+    res.json(resp.data);
+  } catch (error) {
+    console.error("ERROR GATEWAY NAME:", error.response ? error.response.data : error.message);
+    if (error.response && error.response.status === 400) {
+      return res.status(400).json({ error: error.response.data.error });
+    }
+    res.status(500).json({ error: "Error al cambiar el nombre" });
+  }
+});
+
+/**
+ * @swagger
+ * /api/perfil/password/verify:
+ *   post:
+ *     summary: Verifica si la contraseña actual es correcta
+ *     tags:
+ *       - Perfil
+ */
+app.post('/api/perfil/password/verify', authMiddleware, async (req, res) => {
+  try {
+    console.log("BODY EN GATEWAY (verify):", req.body, "USER ID:", req.user.userId);
+    const resp = await axios.post(`${USERS_URL}/profile/password/verify/${req.user.userId}`, req.body);
+    res.json(resp.data);
+  } catch (error) {
+    console.error("ERROR GATEWAY VERIFY:", error.response ? error.response.data : error.message);
+    if (error.response && error.response.status === 400) {
+      return res.status(400).json({ error: error.response.data.error });
+    }
+    res.status(500).json({ error: "Error al verificar la contraseña" });
+  }
+});
+
+/**
+ * @swagger
+ * /api/perfil/password:
+ *   put:
+ *     summary: Cambia la contraseña del usuario autenticado
+ *     tags:
+ *       - Perfil
+ */
+app.put('/api/perfil/password', authMiddleware, async (req, res) => {
+  try {
+    const resp = await axios.put(`${USERS_URL}/profile/password/${req.user.userId}`, req.body);
+    res.json(resp.data);
+  } catch (error) {
+    if (error.response && error.response.status === 400) {
+      return res.status(400).json({ error: error.response.data.error });
+    }
+    res.status(500).json({ error: "Error al cambiar la contraseña" });
+  }
+});
+
+/**
+ * @swagger
+ * /api/perfil/plan:
+ *   put:
+ *     summary: Cambia el plan del usuario autenticado
+ *     tags:
+ *       - Perfil
+ */
+app.put('/api/perfil/plan', authMiddleware, async (req, res) => {
+  try {
+    const resp = await axios.put(`${USERS_URL}/profile/plan/${req.user.userId}`, req.body);
+    res.json(resp.data);
+  } catch (error) {
+    res.status(500).json({ error: "Error al cambiar el plan" });
+  }
+});
+
 // --- RUTAS DE FAVORITOS ---
 
 /**
@@ -400,6 +503,49 @@ app.get('/api/favoritos/check/:peliculaId', authMiddleware, async (req, res) => 
     res.json(resp.data);
   } catch (error) {
     res.status(500).json({ error: "Error al verificar favorito" });
+  }
+});
+
+/**
+ * @swagger
+ * /api/favoritos:
+ *   get:
+ *     summary: Obtiene las películas favoritas del usuario autenticado con sus detalles
+ *     tags:
+ *       - Favoritos
+ */
+app.get('/api/favoritos', authMiddleware, async (req, res) => {
+  try {
+    // 1. Obtener los IDs de las películas favoritas
+    const favsResp = await axios.get(`${USERS_URL}/favoritos/${req.user.userId}`);
+    const favoritos = favsResp.data;
+
+    if (favoritos.length === 0) {
+      return res.json([]);
+    }
+
+    const idsPeliculas = favoritos.map(f => f.peliculaId);
+
+    // 2. Traer los detalles de esas películas desde el catálogo
+    const detallesResp = await axios.post(`${CATALOG_URL}/peliculas/batch`, {
+      ids: idsPeliculas
+    });
+    
+    const detallesPeliculas = detallesResp.data;
+
+    // 3. Combinar datos
+    const resultado = favoritos.map(fav => {
+      const detalle = detallesPeliculas.find(p => p.id === fav.peliculaId);
+      return {
+        ...fav,
+        pelicula: detalle || null
+      };
+    });
+
+    res.json(resultado);
+  } catch (error) {
+    console.error("Error al obtener favoritos completos:", error);
+    res.status(500).json({ error: "Error al obtener lista de favoritos" });
   }
 });
 

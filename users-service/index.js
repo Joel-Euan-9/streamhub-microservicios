@@ -186,6 +186,109 @@ app.post('/billetera/comision', async (req, res) => {
   }
 });
 
+// --- PERFIL DE USUARIO ---
+
+// Obtener perfil de usuario
+app.get('/profile/:id', async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.params.id },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        plan: true,
+        createdAt: true,
+      }
+    });
+    if (!user) return res.status(404).json({ error: "Usuario no encontrado" });
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ error: "Error al obtener perfil" });
+  }
+});
+
+// Cambiar nombre
+app.put('/profile/name/:id', async (req, res) => {
+  try {
+    const { name } = req.body;
+    if (!name || name.trim() === "") {
+      return res.status(400).json({ error: "El nombre no puede estar vacío" });
+    }
+    
+    await prisma.user.update({
+      where: { id: req.params.id },
+      data: { name: name.trim() }
+    });
+
+    res.json({ message: "Nombre actualizado correctamente" });
+  } catch (error) {
+    console.error("Error al actualizar nombre:", error);
+    res.status(500).json({ error: "Error al actualizar nombre" });
+  }
+});
+
+// Verificar contraseña actual
+app.post('/profile/password/verify/:id', async (req, res) => {
+  try {
+    const { currentPassword } = req.body;
+    const user = await prisma.user.findUnique({ where: { id: req.params.id } });
+    if (!user) return res.status(404).json({ error: "Usuario no encontrado" });
+
+    const isValid = await bcrypt.compare(currentPassword, user.password);
+    if (!isValid) return res.status(400).json({ error: "La contraseña actual es incorrecta" });
+
+    res.json({ success: true, message: "Contraseña correcta" });
+  } catch (error) {
+    console.error("Error al verificar contraseña:", error);
+    res.status(500).json({ error: "Error al verificar contraseña" });
+  }
+});
+
+// Cambiar contraseña
+app.put('/profile/password/:id', async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    
+    const user = await prisma.user.findUnique({ where: { id: req.params.id } });
+    if (!user) return res.status(404).json({ error: "Usuario no encontrado" });
+
+    const isValid = await bcrypt.compare(currentPassword, user.password);
+    if (!isValid) return res.status(400).json({ error: "La contraseña actual es incorrecta" });
+
+    const isSame = await bcrypt.compare(newPassword, user.password);
+    if (isSame) return res.status(400).json({ error: "La nueva contraseña no puede ser igual a la anterior" });
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    
+    await prisma.user.update({
+      where: { id: req.params.id },
+      data: { password: hashedPassword }
+    });
+
+    res.json({ message: "Contraseña actualizada correctamente" });
+  } catch (error) {
+    res.status(500).json({ error: "Error al actualizar contraseña" });
+  }
+});
+
+// Cambiar plan
+app.put('/profile/plan/:id', async (req, res) => {
+  try {
+    const { plan } = req.body; // 'BASIC', 'PREMIUM', o 'STUDIO'
+    
+    const user = await prisma.user.update({
+      where: { id: req.params.id },
+      data: { plan: plan },
+      select: { id: true, plan: true }
+    });
+
+    res.json({ message: "Plan actualizado", plan: user.plan });
+  } catch (error) {
+    res.status(500).json({ error: "Error al actualizar plan" });
+  }
+});
+
 // --- FAVORITOS ---
 
 // Verificar si una película es favorita
@@ -201,6 +304,20 @@ app.get('/favoritos/check/:usuarioId/:peliculaId', async (req, res) => {
   } catch (error) {
     console.error("Error check favorito:", error);
     res.status(500).json({ error: "Error verificando favorito" });
+  }
+});
+
+// Obtener todos los favoritos de un usuario
+app.get('/favoritos/:usuarioId', async (req, res) => {
+  try {
+    const favoritos = await prisma.favorito.findMany({
+      where: { usuarioId: req.params.usuarioId },
+      orderBy: { fechaAgregado: 'desc' }
+    });
+    res.json(favoritos);
+  } catch (error) {
+    console.error("Error al obtener favoritos:", error);
+    res.status(500).json({ error: "Error al obtener favoritos" });
   }
 });
 
