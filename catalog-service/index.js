@@ -30,6 +30,24 @@ app.get('/peliculas/estrenos', async (req, res) => {
   }
 });
 
+app.get('/peliculas/top', async (req, res) => {
+  try {
+    const topPeliculas = await prisma.pelicula.findMany({
+      orderBy: { 
+        vistasTotales: 'desc' 
+      },
+      take: 10, 
+      include: {
+        generos: true 
+      }
+    });
+    res.json(topPeliculas);
+  } catch (error) {
+    console.error("Error obteniendo top 10:", error);
+    res.status(500).json({ error: "Error interno del servidor" });
+  }
+});
+
 // 2. RUTAS DE ACCIÓN (POST)
 app.post('/peliculas/batch', async (req, res) => {
   const { ids } = req.body;

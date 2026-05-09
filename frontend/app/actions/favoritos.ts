@@ -4,15 +4,13 @@ import { fetchWithAuth } from "@/lib/api";
 
 export async function getFavoritosAction() {
   try {
-    const res = await fetchWithAuth("http://gateway-service:8000/api/favoritos", {
-      cache: 'no-store'
+    const res = await fetchWithAuth('http://gateway-service:8000/api/favoritos', { 
+      cache: 'no-store' 
     });
+    if (!res.ok) return [];
     
-    if (!res.ok) {
-      return [];
-    }
     const data = await res.json();
-    return Array.isArray(data) ? data : [];
+    return data;
   } catch (error) {
     console.error("Error getFavoritosAction:", error);
     return [];

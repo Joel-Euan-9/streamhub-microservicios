@@ -300,8 +300,10 @@ export default function MoviePlayer({ videoUrl, posterUrl, peliculaId, initialTi
                     <RotateCw />
                   </button>
 
-                  <div className="flex items-center gap-2 group/volume">
-                    {volume === 0 ? <VolumeX /> : <Volume2 />}
+                  <div className="flex items-center group/volume">
+                    <button className="p-2 hover:bg-white/10 rounded-full transition-colors z-10 relative">
+                      {volume === 0 ? <VolumeX /> : <Volume2 />}
+                    </button>
                     <input 
                       type="range"
                       min="0"
@@ -309,7 +311,7 @@ export default function MoviePlayer({ videoUrl, posterUrl, peliculaId, initialTi
                       step="0.1"
                       value={volume}
                       onChange={handleVolumeChange}
-                      className="w-0 group-hover/volume:w-20 transition-all accent-white cursor-pointer"
+                      className="w-0 opacity-0 group-hover/volume:w-24 group-hover/volume:opacity-100 group-hover/volume:ml-2 transition-all duration-300 accent-white cursor-pointer"
                     />
                   </div>
 

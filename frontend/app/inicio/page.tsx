@@ -7,7 +7,9 @@ import TopMovieCard from "@/app/components/inicio/TopMovieCard";
 import GenreCard from "@/app/components/inicio/GenreCard";
 import ContinueCard from "@/app/components/inicio/ContinueCard";
 import CarouselContainer from "@/app/components/inicio/CarouselContainer";
+import BentoGrid from "@/app/components/inicio/BentoGrid";
 import { getHistorialAction } from "@/app/actions/historial";
+import { getFavoritosAction } from "@/app/actions/favoritos";
 
 // --- DATOS ESTATICOS (Mocks para secciones que aún no tienen API) ---
 const GENRES = [
@@ -26,8 +28,8 @@ const GENRES = [
 // --- FETCH DATA ---
 async function getEstrenos() {
   try {
-    const res = await fetchWithAuth('http://gateway-service:8000/api/peliculas/estrenos', { 
-      cache: 'no-store' 
+    const res = await fetchWithAuth('http://gateway-service:8000/api/peliculas/estrenos', {
+      cache: 'no-store'
     });
     if (!res.ok) return [];
     return res.json();
@@ -37,12 +39,31 @@ async function getEstrenos() {
   }
 }
 
+async function getTopPeliculas() {
+  try {
+    const res = await fetchWithAuth('http://gateway-service:8000/api/peliculas/top', { 
+      cache: 'no-store' 
+    });
+    if (!res.ok) return [];
+    return res.json();
+  } catch (error) {
+    console.error("Error cargando top 10:", error);
+    return [];
+  }
+}
+
 export default async function InicioPage() {
   const peliculas = await getEstrenos();
   const peliculasHero = peliculas.slice(0, 4);
 
+  const topPeliculas = await getTopPeliculas();
+
   const historialRes = await getHistorialAction();
   const historial = Array.isArray(historialRes) ? historialRes.slice(0, 10) : [];
+
+  const favoritosAll = await getFavoritosAction();
+  const favoritos = Array.isArray(favoritosAll) ? favoritosAll.slice(0, 5) : [];
+  const favoritosTotal = Array.isArray(favoritosAll) ? favoritosAll.length : 0;
 
   return (
     <>
@@ -53,29 +74,30 @@ export default async function InicioPage() {
         <HeroCarousel peliculas={peliculasHero} />
 
         <div className="relative z-10 space-y-12 px-5 md:px-10">
-          
+
           {/* SECCIÓN: LO NUEVO */}
           <CarouselContainer title="Lo Nuevo">
             {peliculas.map((movie: any) => (
-              <MovieCard 
-                key={movie.id} 
+              <MovieCard
+                key={movie.id}
                 id={movie.id} // <-- ¡Esta es la línea nueva que debes agregar!
-                title={movie.titulo} 
-                year={new Date(movie.fechaLanzamiento).getFullYear().toString()} 
-                genre={movie.generos?.[0]?.nombre || "Estreno"} 
-                img={movie.rutaCaratula} 
+                title={movie.titulo}
+                year={new Date(movie.fechaLanzamiento).getFullYear().toString()}
+                genre={movie.generos?.[0]?.nombre || "Estreno"}
+                img={movie.rutaCaratula}
               />
             ))}
           </CarouselContainer>
 
           {/* SECCIÓN: TOP 10 (Usando CarouselContainer) */}
           <CarouselContainer title="Top 10 Películas Más Vistas">
-            {peliculas.map((movie: any, index: number) => (
-              <TopMovieCard 
-                key={movie.id} 
-                rank={index + 1} 
-                title={movie.titulo} 
-                img={movie.rutaCaratula} 
+            {topPeliculas.map((movie: any, index: number) => (
+              <TopMovieCard
+                key={movie.id}
+                id={movie.id}
+                rank={index + 1}
+                title={movie.titulo}
+                img={movie.rutaCaratula}
               />
             ))}
           </CarouselContainer>
@@ -89,6 +111,22 @@ export default async function InicioPage() {
             </CarouselContainer>
           </section>
 
+          {/* SECCIÓN: FAVORITOS (Mi Lista) */}
+          {favoritos.length > 0 && (
+            <BentoGrid
+              title="Mis Favoritos"
+              total={favoritosTotal}
+              viewAllLink="/miactividad#favoritos"
+              items={favoritos.map((fav: any, idx: number) => ({
+                id: fav.pelicula.id,
+                title: fav.pelicula.titulo,
+                // The first item can say "Agregado recientemente", others use genre
+                subtitle: idx === 0 ? "Agregado recientemente" : (fav.pelicula.generos?.[0]?.nombre || "Favorito"),
+                img: fav.pelicula.rutaImagenFondo || fav.pelicula.rutaCaratula
+              }))}
+            />
+          )}
+
           {/* SECCIÓN: SEGUIR VIENDO */}
           {historial.length > 0 && (
             <CarouselContainer title="Seguir Viendo">
@@ -99,18 +137,18 @@ export default async function InicioPage() {
 
                 const remainingSeconds = Math.max(0, durationSeconds - item.minutoPausa);
                 const remainingMinutes = Math.ceil(remainingSeconds / 60);
-                
+
                 const isCompleted = item.completada || remainingMinutes <= 0 || progress >= 95;
                 const remainingText = isCompleted ? "Completada" : `Quedan ${remainingMinutes} min`;
 
                 return (
-                  <ContinueCard 
-                    key={item.pelicula.id || item.id} 
+                  <ContinueCard
+                    key={item.pelicula.id || item.id}
                     id={item.pelicula.id}
-                    title={item.pelicula.titulo} 
+                    title={item.pelicula.titulo}
                     remaining={remainingText}
-                    img={item.pelicula.rutaCaratula} 
-                    progress={progress} 
+                    img={item.pelicula.rutaCaratula}
+                    progress={progress}
                   />
                 );
               })}

@@ -20,15 +20,18 @@ export default function Navbar() {
   const [searchTerm, setSearchTerm] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [showMobileSearch, setShowMobileSearch] = useState(false);
   
   // Ref para detectar clics fuera del buscador y cerrarlo
   const searchRef = useRef<HTMLDivElement>(null);
+  const mobileSearchRef = useRef<HTMLDivElement>(null);
 
   // Cierra el menú móvil y limpia el buscador cuando cambias de página
   useEffect(() => {
     setOpen(false);
     setSearchTerm("");
     setResults([]);
+    setShowMobileSearch(false);
   }, [pathname]);
 
   // --- LÓGICA DE BÚSQUEDA (Debounce) ---
@@ -66,7 +69,11 @@ export default function Navbar() {
   // Cerrar el buscador al hacer clic afuera
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      const clickedDesktop = searchRef.current && searchRef.current.contains(target);
+      const clickedMobile = mobileSearchRef.current && mobileSearchRef.current.contains(target);
+      
+      if (!clickedDesktop && !clickedMobile) {
         setResults([]);
       }
     };
@@ -108,7 +115,7 @@ export default function Navbar() {
         </ul>
       </div>
 
-      {/* --- SECCIÓN DEL BUSCADOR --- */}
+      {/* --- SECCIÓN DEL BUSCADOR (Escritorio) --- */}
       <div className="mx-2 hidden min-w-0 flex-1 justify-center md:flex" ref={searchRef}>
         <div className="relative flex w-full max-w-[400px] items-center">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`pointer-events-none absolute left-4 transition-colors ${searchTerm ? 'text-[#3a86ff]' : 'text-[#aeb4c0]'}`}>
@@ -124,12 +131,10 @@ export default function Navbar() {
             className="w-full rounded-full border border-white/10 bg-white/5 py-3 pl-11 pr-5 text-sm text-white outline-none transition placeholder:text-[#aeb4c0] focus:border-[#3a86ff] focus:bg-white/10 focus:shadow-[0_0_15px_rgba(58,134,255,0.20)]"
           />
 
-          {/* Animación de carga opcional */}
           {isSearching && (
             <div className="absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin rounded-full border-2 border-[#3a86ff] border-t-transparent"></div>
           )}
 
-          {/* MENÚ DESPLEGABLE DE RESULTADOS */}
           {results.length > 0 && (
             <div className="absolute left-0 top-[110%] w-full overflow-hidden rounded-xl border border-white/10 bg-[rgba(11,12,21,0.95)] shadow-[0_15px_40px_rgba(0,0,0,0.5)] backdrop-blur-xl">
               {results.map((movie) => (
@@ -137,16 +142,12 @@ export default function Navbar() {
                   href={`/peliculas/${movie.id}`}
                   key={movie.id}
                   onClick={() => {
-                    setSearchTerm(""); // Limpia el buscador al hacer clic
+                    setSearchTerm("");
                     setResults([]);
                   }}
                   className="flex items-center gap-4 border-b border-white/5 p-3 transition hover:bg-white/10 last:border-0"
                 >
-                  <img
-                    src={movie.rutaCaratula}
-                    alt={movie.titulo}
-                    className="h-14 w-10 shrink-0 rounded object-cover shadow-sm"
-                  />
+                  <img src={movie.rutaCaratula} alt={movie.titulo} className="h-14 w-10 shrink-0 rounded object-cover shadow-sm" />
                   <div className="flex flex-col overflow-hidden">
                     <span className="truncate text-sm font-bold text-white">{movie.titulo}</span>
                     <span className="text-xs text-[#aeb4c0]">{new Date(movie.fechaLanzamiento).getFullYear()}</span>
@@ -156,7 +157,6 @@ export default function Navbar() {
             </div>
           )}
 
-          {/* Mensaje de no encontrado */}
           {!isSearching && searchTerm.length > 1 && results.length === 0 && (
             <div className="absolute left-0 top-[110%] w-full rounded-xl border border-white/10 bg-[rgba(11,12,21,0.95)] p-4 text-center text-sm text-[#aeb4c0] shadow-[0_15px_40px_rgba(0,0,0,0.5)] backdrop-blur-xl">
               No se encontraron resultados para "{searchTerm}"
@@ -166,6 +166,16 @@ export default function Navbar() {
       </div>
 
       <div className="flex shrink-0 items-center gap-3">
+        {/* Botón Lupa para Móvil */}
+        <button 
+          className="flex h-8 w-8 items-center justify-center rounded-full bg-white/5 text-white transition hover:bg-white/10 md:hidden"
+          onClick={() => setShowMobileSearch(true)}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+        </button>
         <Link href="#" className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-[rgba(255,255,255,0.05)] py-1.5 pl-1.5 pr-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-white/10 sm:pr-4">
           <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-tr from-[#00f2fe] to-[#4facfe] shadow-[0_0_10px_rgba(79,172,254,0.5)]">
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0b0c15" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
@@ -180,6 +190,72 @@ export default function Navbar() {
           <span className="hidden xl:inline">Mi cuenta</span>
         </Link>
       </div>
+
+      {/* --- SECCIÓN DEL BUSCADOR (Móvil - Overlay) --- */}
+      {showMobileSearch && (
+        <div className="absolute inset-0 z-50 flex items-center justify-between gap-3 bg-[rgba(11,12,21,0.98)] px-4 md:hidden" ref={mobileSearchRef}>
+          <div className="relative flex w-full items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`pointer-events-none absolute left-4 transition-colors ${searchTerm ? 'text-[#3a86ff]' : 'text-[#aeb4c0]'}`}>
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input
+              type="text"
+              placeholder="Buscar películas..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              autoFocus
+              className="w-full rounded-full border border-white/10 bg-white/5 py-3 pl-11 pr-5 text-sm text-white outline-none transition placeholder:text-[#aeb4c0] focus:border-[#3a86ff] focus:bg-white/10 focus:shadow-[0_0_15px_rgba(58,134,255,0.20)]"
+            />
+            
+            {isSearching && (
+              <div className="absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin rounded-full border-2 border-[#3a86ff] border-t-transparent"></div>
+            )}
+
+            {results.length > 0 && (
+              <div className="absolute left-0 top-[110%] w-full overflow-hidden rounded-xl border border-white/10 bg-[rgba(11,12,21,0.95)] shadow-[0_15px_40px_rgba(0,0,0,0.5)] backdrop-blur-xl">
+                {results.map((movie) => (
+                  <Link
+                    href={`/peliculas/${movie.id}`}
+                    key={movie.id}
+                    onClick={() => {
+                      setSearchTerm("");
+                      setResults([]);
+                      setShowMobileSearch(false);
+                    }}
+                    className="flex items-center gap-4 border-b border-white/5 p-3 transition hover:bg-white/10 last:border-0"
+                  >
+                    <img src={movie.rutaCaratula} alt={movie.titulo} className="h-14 w-10 shrink-0 rounded object-cover shadow-sm" />
+                    <div className="flex flex-col overflow-hidden">
+                      <span className="truncate text-sm font-bold text-white">{movie.titulo}</span>
+                      <span className="text-xs text-[#aeb4c0]">{new Date(movie.fechaLanzamiento).getFullYear()}</span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+
+            {!isSearching && searchTerm.length > 1 && results.length === 0 && (
+              <div className="absolute left-0 top-[110%] w-full rounded-xl border border-white/10 bg-[rgba(11,12,21,0.95)] p-4 text-center text-sm text-[#aeb4c0] shadow-[0_15px_40px_rgba(0,0,0,0.5)] backdrop-blur-xl">
+                No se encontraron resultados para "{searchTerm}"
+              </div>
+            )}
+          </div>
+          <button 
+            onClick={() => {
+              setShowMobileSearch(false);
+              setSearchTerm("");
+              setResults([]);
+            }}
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/5 text-white"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+      )}
     </nav>
   );
 }

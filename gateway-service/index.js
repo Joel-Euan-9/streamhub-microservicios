@@ -91,6 +91,26 @@ app.get('/api/peliculas/estrenos', async (req, res) => {
 
 /**
  * @swagger
+ * /api/peliculas/top:
+ *   get:
+ *     summary: Obtiene el top 10 de películas más vistas
+ *     tags:
+ *      - Catálogo
+ *     responses:
+ *       200:
+ *         description: Lista de películas top
+ */
+app.get('/api/peliculas/top', async (req, res) => {
+  try {
+    const resp = await axios.get(`${CATALOG_URL}/peliculas/top`);
+    res.json(resp.data);
+  } catch (error) {
+    res.status(500).json({ error: "Error conectando con el catálogo para el top 10" });
+  }
+});
+
+/**
+ * @swagger
  * /api/peliculas/{id}:
  *   get:
  *     summary: Obtiene los detalles de una película específica
