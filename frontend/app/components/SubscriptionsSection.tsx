@@ -42,7 +42,7 @@ const PLANS = [
   }
 ]
 
-export default function SubscriptionsSection() {
+export default function SubscriptionsSection({ onPlanSelect }: { onPlanSelect?: (planName: string) => void } = {}) {
   return (
     <section className="py-10 px-5 md:px-20 bg-[#0b0c15] text-white min-h-screen flex flex-col justify-center">
       <div className="text-center mb-8">
@@ -53,8 +53,8 @@ export default function SubscriptionsSection() {
       {/* Contenedor principal más compacto */}
       <div className="max-w-6xl mx-auto w-full grid grid-cols-1 md:grid-cols-3 border border-white/10 rounded-xl overflow-hidden shadow-2xl">
         {PLANS.map((plan, i) => (
-          <div 
-            key={i} 
+          <div
+            key={i}
             className={`flex flex-col border-r border-white/10 last:border-0 ${plan.highlight ? 'bg-white/[0.03]' : ''}`}
           >
             {/* Cabecera reducida */}
@@ -68,8 +68,8 @@ export default function SubscriptionsSection() {
             {/* Lista de características COMPACTA */}
             <div className="flex-grow flex flex-col">
               {plan.features.map((feature, idx) => (
-                <div 
-                  key={idx} 
+                <div
+                  key={idx}
                   className="px-5 py-3 border-b border-white/5 flex items-center gap-3 last:border-0 min-h-[50px]"
                 >
                   {/* Icono más pequeño */}
@@ -90,20 +90,21 @@ export default function SubscriptionsSection() {
 
             {/* Botón más pequeño */}
             <div className="p-5 bg-white/[0.01]">
-              <button className={`w-full py-2.5 rounded-md font-bold text-sm transition-all ${
-                plan.highlight 
-                ? 'bg-[#3a86ff] hover:bg-[#3a86ff]/80 text-white shadow-[0_0_15px_rgba(58,134,255,0.3)]' 
-                : 'bg-white/10 hover:bg-white/20 text-white'
-              }`}>
+              <button
+                onClick={() => onPlanSelect?.(plan.name)}
+                className={`w-full py-2.5 rounded-md font-bold text-sm transition-all ${plan.highlight
+                    ? 'bg-[#3a86ff] hover:bg-[#3a86ff]/80 text-white shadow-[0_0_15px_rgba(58,134,255,0.3)]'
+                    : 'bg-white/10 hover:bg-white/20 text-white'
+                  }`}>
                 Elegir {plan.name}
               </button>
             </div>
           </div>
         ))}
       </div>
-      
+
       <p className="mt-6 text-[10px] text-gray-500 text-center max-w-2xl mx-auto leading-tight">
-        * Acceso sujeto a disponibilidad. El plan Studio Pass requiere verificación. 
+        * Acceso sujeto a disponibilidad. El plan Studio Pass requiere verificación.
         Precios expresados en moneda nacional e incluyen impuestos.
       </p>
     </section>

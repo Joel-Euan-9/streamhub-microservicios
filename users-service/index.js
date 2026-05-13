@@ -3,7 +3,7 @@ const express = require('express');
 const { PrismaClient } = require('@prisma/client');
 const app = express();
 const prisma = new PrismaClient();
-    const jwt = require('jsonwebtoken');
+const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 
 
@@ -12,13 +12,13 @@ app.use(express.json());
 // Actualizar progreso (Seguir viendo)
 app.post('/historial', async (req, res) => {
   const { usuarioId, peliculaId, minuto, completada } = req.body;
-  
+
   const visualizacion = await prisma.visualizacion.upsert({
     where: { usuarioId_peliculaId: { usuarioId, peliculaId } },
     update: { minutoPausa: minuto, completada, ultimaVezVisto: new Date() },
     create: { usuarioId, peliculaId, minutoPausa: minuto, completada }
   });
-  
+
   res.json(visualizacion);
 });
 
@@ -38,7 +38,6 @@ app.post('/register', async (req, res) => {
   try {
     const { username, email, password } = req.body;
 
-    console.log("BODY:", req.body); // 👈 DEBUG
 
     if (!email || !password) {
       return res.status(400).json({ error: "Email y password requeridos" });
@@ -50,7 +49,7 @@ app.post('/register', async (req, res) => {
     });
 
     if (existingUser) {
-      return res.status(400).json({ error: "El usuario ya existe" });
+      return res.status(400).json({ error: "Ya existe una cuenta con ese correo electrónico" });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -124,7 +123,7 @@ app.post('/login', async (req, res) => {
       }
     });
 
-  } catch (error) { 
+  } catch (error) {
 
     res.status(500).json({
       error: error,
@@ -142,7 +141,7 @@ app.get('/usuarios', async (req, res) => {
         id: true,
         email: true,
         name: true,
-        plan: true,              
+        plan: true,
         peliculasVistasHoy: true,
         fechaUltimaVista: true,
         saldoBilletera: true,
@@ -151,7 +150,7 @@ app.get('/usuarios', async (req, res) => {
         // Ignoramos intencionalmente el campo 'password' y los arreglos relacionales
       }
     });
-    
+
     res.json(usuarios);
   } catch (error) {
     console.error("Error al obtener usuarios en la BD:", error);
@@ -160,6 +159,28 @@ app.get('/usuarios', async (req, res) => {
 });
 
 // Simular el pago de una comisión al creador
+app.put('/usuarios/:id/plan', async (req, res) => {
+  const { id } = req.params;
+  const { plan } = req.body;
+
+  try {
+    const validPlans = ['BASIC', 'PREMIUM', 'STUDIO'];
+    if (!validPlans.includes(plan)) {
+      return res.status(400).json({ error: "Plan inválido" });
+    }
+
+    const user = await prisma.user.update({
+      where: { id },
+      data: { plan }
+    });
+
+    res.json({ message: "Plan actualizado exitosamente", user });
+  } catch (error) {
+    console.error("Error al actualizar el plan:", error);
+    res.status(500).json({ error: "No se pudo actualizar el plan" });
+  }
+});
+
 app.post('/billetera/comision', async (req, res) => {
   const { creadorId, monto, descripcion } = req.body;
   try {

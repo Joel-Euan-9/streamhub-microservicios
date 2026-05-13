@@ -24,7 +24,7 @@ export async function loginUser(formData: FormData) {
             return { error: data.error || "Credenciales inválidas" };
         }
 
-        // 🔥 AQUÍ ESTÁ EL CAMBIO
+
         const cookieStore = await cookies();
 
         cookieStore.set("token", data.token, {

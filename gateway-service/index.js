@@ -112,7 +112,7 @@ app.get('/api/peliculas/:id', async (req, res) => {
   try {
     const resp = await axios.get(`${CATALOG_URL}/peliculas/${req.params.id}`);
     let pelicula = resp.data;
-    
+
     // MAGIA DE STREAMING: Concatenamos el dominio de Nginx con el nombre del archivo
     if (pelicula && pelicula.rutaVideo) {
       // Creamos un nuevo campo llamado "rutaVideoCompleta" para el frontend
@@ -243,6 +243,26 @@ app.get('/api/usuarios', async (req, res) => {
 
 /**
  * @swagger
+ * /api/usuarios/{id}/plan:
+ *   put:
+ *     summary: Actualiza el plan de un usuario
+ *     tags:
+ *       - Usuarios
+ *     responses:
+ *       200:
+ *         description: Plan actualizado
+ */
+app.put('/api/usuarios/:id/plan', async (req, res) => {
+  try {
+    const resp = await axios.put(`${USERS_URL}/usuarios/${req.params.id}/plan`, req.body);
+    res.json(resp.data);
+  } catch (error) {
+    res.status(500).json({ error: "Error al actualizar el plan" });
+  }
+});
+
+/**
+ * @swagger
  * /api/usuarios/register:
  *   post:
  *     summary: Crea un nuevo usuario al registrarse
@@ -258,7 +278,11 @@ app.post('/api/auth/register', async (req, res) => {
     const resp = await axios.post(`${USERS_URL}/register`, req.body);
     res.json(resp.data);
   } catch (error) {
-    res.status(500).json({ error: "Error en registro" });
+    if (error.response) {
+      return res.status(error.response.status).json(error.response.data);
+    }
+    console.error("gateway error:", error.message);
+    res.status(500).json({ error: "Error en gateway" });
   }
 });
 

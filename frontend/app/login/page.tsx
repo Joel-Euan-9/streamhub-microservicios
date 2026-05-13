@@ -5,6 +5,7 @@ import { Input } from "../components/ui/Input";
 import { useState } from "react";
 import { loginUser } from "./actions";
 import { useForm } from "react-hook-form";
+import { useRouter } from "next/navigation";
 import z from "zod";
 import { toast } from "sonner";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -16,20 +17,21 @@ const loginSchema = z.object({
     password: z.string().min(1, "Ingresa una contraseña")
 })
 
-type LoginFormValues = z.infer<typeof  loginSchema>
+type LoginFormValues = z.infer<typeof loginSchema>
 
 export default function Page() {
     const [error, setError] = useState("");
+    const router = useRouter();
 
     const {
         register,
         handleSubmit,
-        formState: {errors, isSubmitting}
+        formState: { errors, isSubmitting }
     } = useForm<LoginFormValues>({
         resolver: zodResolver(loginSchema),
         mode: "onBlur"
     })
- 
+
     const onSubmit = async (data: LoginFormValues) => {
         const formData = new FormData();
         formData.append("email", data.email);
@@ -47,9 +49,7 @@ export default function Page() {
             duration: 2000,
         })
 
-        setTimeout(() => {
-            window.location.href = "/inicio"
-        }, 2000);
+        router.push("/inicio");
     }
 
 
@@ -72,28 +72,28 @@ export default function Page() {
                     {error && (
                         <div className="bg-red-500/15 border border-red-500/50 text-white p-3 rounded-md text-sm flex items-center justify-center gap-2 animate-in fade-in zoom-in duration-200">
                             <span className="flex-1 text-center">
-                            {error}
+                                {error}
                             </span>
-                            <button 
-                            onClick={() => setError("")} 
-                            className="text-white transition-colors"
+                            <button
+                                onClick={() => setError("")}
+                                className="text-white transition-colors"
                             >
-                            <X className="w-4 h-4" />
+                                <X className="w-4 h-4" />
                             </button>
                         </div>
-                        )}
+                    )}
 
 
-                    <Input 
-                        label="Correo electrónico" 
-                        type="email" 
+                    <Input
+                        label="Correo electrónico"
+                        type="email"
                         {...register("email")} // El name ya viene aquí dentro
                         error={errors.email?.message}
                     />
-                    <Input 
-                        label="Contraseña" 
-                        type="password" 
-                        {...register("password")} 
+                    <Input
+                        label="Contraseña"
+                        type="password"
+                        {...register("password")}
                         error={errors.password?.message}
                     />
 
