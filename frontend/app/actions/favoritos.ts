@@ -1,0 +1,55 @@
+"use server";
+
+import { fetchWithAuth } from "@/lib/api";
+
+export async function getFavoritosAction() {
+  try {
+    const res = await fetchWithAuth('http://gateway-service:8000/api/favoritos', { 
+      cache: 'no-store' 
+    });
+    if (!res.ok) return [];
+    
+    const data = await res.json();
+    return data;
+  } catch (error) {
+    console.error("Error getFavoritosAction:", error);
+    return [];
+  }
+}
+
+export async function toggleFavoriteAction(peliculaId: string) {
+  try {
+    const res = await fetchWithAuth("http://gateway-service:8000/api/favoritos/toggle", {
+      method: "POST",
+      body: JSON.stringify({ peliculaId })
+    });
+    
+    if (!res.ok) {
+      return { success: false, error: "Error de servidor al alternar favorito" };
+    }
+
+    const data = await res.json();
+    return { success: true, isFavorite: data.isFavorite, message: data.message };
+  } catch (error) {
+    console.error("Error toggleFavoriteAction:", error);
+    return { success: false, error: "Error de conexión" };
+  }
+}
+
+export async function checkFavoriteAction(peliculaId: string) {
+  try {
+    const res = await fetchWithAuth(`http://gateway-service:8000/api/favoritos/check/${peliculaId}`, {
+      cache: 'no-store'
+    });
+    
+    if (!res.ok) {
+      return { success: false, error: "Error de servidor al checar favorito" };
+    }
+
+    const data = await res.json();
+    return { success: true, isFavorite: data.isFavorite };
+  } catch (error) {
+    console.error("Error checkFavoriteAction:", error);
+    return { success: false, error: "Error de conexión" };
+  }
+}

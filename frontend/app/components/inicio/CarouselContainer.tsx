@@ -39,7 +39,7 @@ export default function CarouselContainer({ title, children, action }: Props) {
       />
       <div 
         ref={scrollRef} 
-        className="flex gap-5 overflow-x-auto pb-5 scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+        className="flex gap-5 overflow-x-auto pt-6 pb-6 px-4 -mx-4 scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
       >
         {children}
       </div>

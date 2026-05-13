@@ -45,7 +45,7 @@ app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 const CATALOG_URL = process.env.CATALOG_SERVICE_URL || 'http://catalog-service:8000';
 const USERS_URL = process.env.USERS_SERVICE_URL || 'http://users-service:8000';
 const INTERACTIONS_URL = process.env.INTERACTIONS_SERVICE_URL || 'http://interactions-service:8000';
-const STREAM_URL = process.env.STREAM_URL || 'http://streamhub.local/';
+const STREAM_URL = process.env.STREAM_URL || 'http://streamhub.local/media/';
 
 // --- RUTAS DEL GATEWAY ---
 
@@ -86,6 +86,26 @@ app.get('/api/peliculas/estrenos', async (req, res) => {
     res.json(resp.data);
   } catch (error) {
     res.status(500).json({ error: "Error conectando con el catálogo para los estrenos" });
+  }
+});
+
+/**
+ * @swagger
+ * /api/peliculas/top:
+ *   get:
+ *     summary: Obtiene el top 10 de películas más vistas
+ *     tags:
+ *      - Catálogo
+ *     responses:
+ *       200:
+ *         description: Lista de películas top
+ */
+app.get('/api/peliculas/top', async (req, res) => {
+  try {
+    const resp = await axios.get(`${CATALOG_URL}/peliculas/top`);
+    res.json(resp.data);
+  } catch (error) {
+    res.status(500).json({ error: "Error conectando con el catálogo para el top 10" });
   }
 });
 
@@ -158,6 +178,7 @@ app.get('/api/peliculas/:id', async (req, res) => {
  */
 app.post('/api/historial', authMiddleware, async (req, res) => {
   try {
+    req.body.usuarioId = req.user.userId;
     const resp = await axios.post(`${USERS_URL}/historial`, req.body);
     res.json(resp.data);
   } catch (error) {
@@ -167,25 +188,19 @@ app.post('/api/historial', authMiddleware, async (req, res) => {
 
 /**
  * @swagger
- * /api/seguir-viendo/{usuarioId}:
+ * /api/historial:
  *   get:
  *     summary: Obtiene las películas que el usuario dejó a medias
  *     tags:
  *       - Seguir Viendo
- *     parameters:
- *       - in: path
- *         name: usuarioId
- *         required: true
- *         schema:
- *           type: string
  *     responses:
  *       200:
  *         description: Lista combinada de historial y detalles de películas
  */
-app.get('/api/seguir-viendo/:usuarioId', authMiddleware, async (req, res) => {
+app.get('/api/historial', authMiddleware, async (req, res) => {
   try {
 
-    const historialResp = await axios.get(`${USERS_URL}/historial/${req.params.usuarioId}`);
+    const historialResp = await axios.get(`${USERS_URL}/historial/${req.user.userId}`);
     const historial = historialResp.data;
 
     if (historial.length === 0) {
@@ -214,6 +229,40 @@ app.get('/api/seguir-viendo/:usuarioId', authMiddleware, async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Error componiendo historial" });
+  }
+});
+
+/**
+ * @swagger
+ * /api/historial/{peliculaId}:
+ *   get:
+ *     summary: Obtiene el progreso de una película para el usuario actual
+ *     tags:
+ *       - Historial
+ */
+app.get('/api/historial/:peliculaId', authMiddleware, async (req, res) => {
+  try {
+    const resp = await axios.get(`${USERS_URL}/historial/${req.user.userId}/${req.params.peliculaId}`);
+    res.json(resp.data);
+  } catch (error) {
+    res.status(500).json({ error: "Error al obtener progreso de la película" });
+  }
+});
+
+/**
+ * @swagger
+ * /api/historial:
+ *   delete:
+ *     summary: Borra el historial del usuario actual
+ *     tags:
+ *       - Historial
+ */
+app.delete('/api/historial', authMiddleware, async (req, res) => {
+  try {
+    const resp = await axios.delete(`${USERS_URL}/historial/${req.user.userId}`);
+    res.json(resp.data);
+  } catch (error) {
+    res.status(500).json({ error: "Error al limpiar el historial" });
   }
 });
 
@@ -405,6 +454,192 @@ app.post('/api/interacciones/votar', authMiddleware, async (req, res) => {
       return res.status(400).json({ error: error.response.data.error });
     }
     res.status(500).json({ error: "Error al registrar la interacción" });
+  }
+});
+
+// --- RUTAS DE PERFIL ---
+
+/**
+ * @swagger
+ * /api/perfil:
+ *   get:
+ *     summary: Obtiene el perfil del usuario autenticado
+ *     tags:
+ *       - Perfil
+ */
+app.get('/api/perfil', authMiddleware, async (req, res) => {
+  try {
+    const resp = await axios.get(`${USERS_URL}/profile/${req.user.userId}`);
+    res.json(resp.data);
+  } catch (error) {
+    if (error.response && error.response.status === 404) {
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    }
+    res.status(500).json({ error: "Error al obtener el perfil" });
+  }
+});
+
+/**
+ * @swagger
+ * /api/perfil/name:
+ *   put:
+ *     summary: Cambia el nombre del usuario autenticado
+ *     tags:
+ *       - Perfil
+ */
+app.put('/api/perfil/name', authMiddleware, async (req, res) => {
+  try {
+    console.log("BODY EN GATEWAY (name):", req.body, "USER ID:", req.user.userId);
+    const resp = await axios.put(`${USERS_URL}/profile/name/${req.user.userId}`, req.body);
+    res.json(resp.data);
+  } catch (error) {
+    console.error("ERROR GATEWAY NAME:", error.response ? error.response.data : error.message);
+    if (error.response && error.response.status === 400) {
+      return res.status(400).json({ error: error.response.data.error });
+    }
+    res.status(500).json({ error: "Error al cambiar el nombre" });
+  }
+});
+
+/**
+ * @swagger
+ * /api/perfil/password/verify:
+ *   post:
+ *     summary: Verifica si la contraseña actual es correcta
+ *     tags:
+ *       - Perfil
+ */
+app.post('/api/perfil/password/verify', authMiddleware, async (req, res) => {
+  try {
+    console.log("BODY EN GATEWAY (verify):", req.body, "USER ID:", req.user.userId);
+    const resp = await axios.post(`${USERS_URL}/profile/password/verify/${req.user.userId}`, req.body);
+    res.json(resp.data);
+  } catch (error) {
+    console.error("ERROR GATEWAY VERIFY:", error.response ? error.response.data : error.message);
+    if (error.response && error.response.status === 400) {
+      return res.status(400).json({ error: error.response.data.error });
+    }
+    res.status(500).json({ error: "Error al verificar la contraseña" });
+  }
+});
+
+/**
+ * @swagger
+ * /api/perfil/password:
+ *   put:
+ *     summary: Cambia la contraseña del usuario autenticado
+ *     tags:
+ *       - Perfil
+ */
+app.put('/api/perfil/password', authMiddleware, async (req, res) => {
+  try {
+    const resp = await axios.put(`${USERS_URL}/profile/password/${req.user.userId}`, req.body);
+    res.json(resp.data);
+  } catch (error) {
+    if (error.response && error.response.status === 400) {
+      return res.status(400).json({ error: error.response.data.error });
+    }
+    res.status(500).json({ error: "Error al cambiar la contraseña" });
+  }
+});
+
+/**
+ * @swagger
+ * /api/perfil/plan:
+ *   put:
+ *     summary: Cambia el plan del usuario autenticado
+ *     tags:
+ *       - Perfil
+ */
+app.put('/api/perfil/plan', authMiddleware, async (req, res) => {
+  try {
+    const resp = await axios.put(`${USERS_URL}/profile/plan/${req.user.userId}`, req.body);
+    res.json(resp.data);
+  } catch (error) {
+    res.status(500).json({ error: "Error al cambiar el plan" });
+  }
+});
+
+// --- RUTAS DE FAVORITOS ---
+
+/**
+ * @swagger
+ * /api/favoritos/check/{peliculaId}:
+ *   get:
+ *     summary: Verifica si una película está en favoritos
+ *     tags:
+ *       - Favoritos
+ */
+app.get('/api/favoritos/check/:peliculaId', authMiddleware, async (req, res) => {
+  try {
+    const resp = await axios.get(`${USERS_URL}/favoritos/check/${req.user.userId}/${req.params.peliculaId}`);
+    res.json(resp.data);
+  } catch (error) {
+    res.status(500).json({ error: "Error al verificar favorito" });
+  }
+});
+
+/**
+ * @swagger
+ * /api/favoritos:
+ *   get:
+ *     summary: Obtiene las películas favoritas del usuario autenticado con sus detalles
+ *     tags:
+ *       - Favoritos
+ */
+app.get('/api/favoritos', authMiddleware, async (req, res) => {
+  try {
+    // 1. Obtener los IDs de las películas favoritas
+    const favsResp = await axios.get(`${USERS_URL}/favoritos/${req.user.userId}`);
+    const favoritos = favsResp.data;
+
+    if (favoritos.length === 0) {
+      return res.json([]);
+    }
+
+    const idsPeliculas = favoritos.map(f => f.peliculaId);
+
+    // 2. Traer los detalles de esas películas desde el catálogo
+    const detallesResp = await axios.post(`${CATALOG_URL}/peliculas/batch`, {
+      ids: idsPeliculas
+    });
+    
+    const detallesPeliculas = detallesResp.data;
+
+    // 3. Combinar datos
+    const resultado = favoritos.map(fav => {
+      const detalle = detallesPeliculas.find(p => p.id === fav.peliculaId);
+      return {
+        ...fav,
+        pelicula: detalle || null
+      };
+    });
+
+    res.json(resultado);
+  } catch (error) {
+    console.error("Error al obtener favoritos completos:", error);
+    res.status(500).json({ error: "Error al obtener lista de favoritos" });
+  }
+});
+
+/**
+ * @swagger
+ * /api/favoritos/toggle:
+ *   post:
+ *     summary: Alterna el estado de favorito de una película
+ *     tags:
+ *       - Favoritos
+ */
+app.post('/api/favoritos/toggle', authMiddleware, async (req, res) => {
+  try {
+    const payload = {
+      usuarioId: req.user.userId,
+      peliculaId: req.body.peliculaId
+    };
+    const resp = await axios.post(`${USERS_URL}/favoritos/toggle`, payload);
+    res.json(resp.data);
+  } catch (error) {
+    res.status(500).json({ error: "Error al alternar favorito" });
   }
 });
 

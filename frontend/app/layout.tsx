@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "sonner";
 
 import "./globals.css";
+import GlobalFooter from "./components/ui/GlobalFooter";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,6 +32,7 @@ export default function RootLayout({
       >
         {children}
         <Toaster richColors position="top-center" />
+        <GlobalFooter />
       </body>
     </html>
   );

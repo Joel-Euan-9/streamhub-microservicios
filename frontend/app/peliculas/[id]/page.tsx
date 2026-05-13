@@ -1,15 +1,29 @@
-// app/peliculas/[id]/page.tsx
 import Navbar from '@/app/components/ui/Navbar';
 import MovieHero from '@/app/components/peliculavista/MovieHero';
 import MoviePlayer from '@/app/components/peliculavista/MoviePlayer';
 import { notFound } from 'next/navigation';
+import { fetchWithAuth } from '@/lib/api';
+import { getProgressAction } from '@/app/actions/historial';
+
+// Función para consultar si la película es favorita
+async function checkIsFavorite(id: string) {
+  try {
+    const res = await fetchWithAuth(`http://gateway-service:8000/api/favoritos/check/${id}`, {
+      cache: 'no-store'
+    });
+    if (!res.ok) return false;
+    const data = await res.json();
+    return data.isFavorite;
+  } catch (error) {
+    return false;
+  }
+}
 
 // Función para traer datos de UNA sola película del Gateway
 async function getMovieDetails(id: string) {
   try {
-    // Ajusta la URL según tu Gateway (ej: /api/peliculas/{id})
     const res = await fetch(`http://gateway-service:8000/api/peliculas/${id}`, { 
-      cache: 'no-store' // Datos frescos siempre
+      cache: 'no-store' 
     });
     
     if (!res.ok) return null;
@@ -21,39 +35,35 @@ async function getMovieDetails(id: string) {
 }
 
 interface Props {
-  params: Promise<{ id: string }>; // Next.js 15+ nos pasa el [id] como Promesa
+  params: Promise<{ id: string }>;
 }
 
-// Marcamos la página como async
 export default async function PeliculaDetailPage({ params }: Props) {
   const { id } = await params;
   
-  // Hacemos el fetch de datos reales
   const movie = await getMovieDetails(id);
 
-  // Si no se encuentra la película en la BD, mostramos error 404
   if (!movie) {
     notFound();
   }
 
-  // URL Temporal para el reproductor (Imagen de fondo como pediste)
-  //const temporaryVideoUrl = movie.rutaImagenFondo; 
-  // Cuando tengas la ruta real, cambiar por: movie.rutaVideo
+  const initialIsFavorite = await checkIsFavorite(id);
+  const progressData = await getProgressAction(id);
+  const initialTime = progressData.completada ? 0 : (progressData.minutoPausa || 0);
 
   return (
     <>
       <Navbar />
       
-      {/* Empujamos el contenido pt-[70px] por el Navbar fixed */}
       <main className="pt-[70px] bg-[#020817]">
         
-        {/* PARTE 1: HERO (Detalles) */}
-        <MovieHero movie={movie} />
+        <MovieHero movie={{ ...movie, id }} initialIsFavorite={initialIsFavorite} />
 
-        {/* PARTE 2: REPRODUCTOR */}
         <MoviePlayer 
           videoUrl={movie.rutaVideoCompleta}
-          posterUrl={movie.rutaImagenFondo} 
+          posterUrl={movie.rutaImagenFondo}
+          peliculaId={id}
+          initialTime={initialTime}
         />
 
         {/* Aquí podrías añadir secciones extra como "Películas Similares" más adelante */}

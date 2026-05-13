@@ -1,10 +1,12 @@
 "use client"; // 1. OBLIGATORIO: Añadimos esto para poder usar useState
 
 import { useState } from 'react';
-import { Play, Star, CalendarDays, Clapperboard, Youtube, X } from 'lucide-react'; // 2. Importamos 'X' para el botón de cerrar
+import { Play, Star, CalendarDays, Youtube, X, Heart } from 'lucide-react'; // 2. Importamos 'X', 'Heart'
+import { toggleFavoriteAction } from '@/app/actions/favoritos';
 
 interface Props {
   movie: {
+    id: string; // Añadido para favoritos
     titulo: string;
     descripcion: string;
     rutaCaratula: string;
@@ -13,12 +15,18 @@ interface Props {
     rutaTrailer: string;
     duracion: number;
     generos?: { nombre: string }[];
-  }
+  };
+  initialIsFavorite?: boolean;
 }
 
-export default function MovieHero({ movie }: Props) {
+export default function MovieHero({ movie, initialIsFavorite = false }: Props) {
   // 3. Estado para controlar si el modal del tráiler está abierto
   const [isTrailerOpen, setIsTrailerOpen] = useState(false);
+  
+  // Estado para Favoritos
+  const [isFavorite, setIsFavorite] = useState(initialIsFavorite);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [isLoadingFav, setIsLoadingFav] = useState(false);
 
   // Formatear fecha completa
   const fechaCompleta = new Date(movie.fechaLanzamiento).toLocaleDateString('es-ES', {
@@ -26,6 +34,25 @@ export default function MovieHero({ movie }: Props) {
     month: 'long',
     year: 'numeric'
   });
+
+  const handleToggleFavorite = async () => {
+    if (isLoadingFav) return;
+    setIsLoadingFav(true);
+    
+    // Optimistic UI (opcional, pero lo haremos con la respuesta real para mayor seguridad)
+    const res = await toggleFavoriteAction(movie.id);
+    
+    if (res.success) {
+      setIsFavorite(res.isFavorite);
+      setToastMessage(res.message);
+      setTimeout(() => setToastMessage(null), 3000); // Ocultar toast a los 3s
+    } else {
+      setToastMessage("Error al actualizar favoritos");
+      setTimeout(() => setToastMessage(null), 3000);
+    }
+    
+    setIsLoadingFav(false);
+  };
 
   // Función para convertir link normal de YT a link de "embed" (reutilizada del reproductor)
   const getEmbedUrl = (url: string) => {
@@ -48,8 +75,8 @@ export default function MovieHero({ movie }: Props) {
           <div className="absolute inset-0 bg-gradient-to-t from-[#020817] via-[#020817]/80 to-transparent" />
         </div>
 
-        <div className="relative z-10 max-w-7xl mx-auto px-6 py-12 grid md:grid-cols-[300px_1fr] gap-12 items-center">
-          <div className="hidden md:block aspect-[2/3] rounded-2xl overflow-hidden shadow-2xl border-4 border-white/5">
+        <div className="relative z-10 max-w-7xl mx-auto px-6 py-12 grid md:grid-cols-[300px_1fr] gap-8 md:gap-12 items-center">
+          <div className="mx-auto w-[160px] sm:w-[220px] md:w-full aspect-[2/3] rounded-2xl overflow-hidden shadow-2xl border-4 border-white/5">
             <img src={movie.rutaCaratula} alt={movie.titulo} className="w-full h-full object-cover" />
           </div>
 
@@ -59,7 +86,7 @@ export default function MovieHero({ movie }: Props) {
             <div className="flex flex-wrap items-center gap-4 text-sm font-semibold">
               <span className="flex items-center gap-1.5 text-emerald-400"><Star size={18} fill="currentColor" /> 9.2</span>
               <span>•</span>
-              <span className="flex items-center gap-1.5 text-gray-300"><CalendarDays size={18} /> {fechaCompleta}</span>
+              <span suppressHydrationWarning className="flex items-center gap-1.5 text-gray-300"><CalendarDays size={18} /> {fechaCompleta}</span>
               <span>•</span>
               <span className="text-gray-300">{movie.duracion} min</span>
             </div>
@@ -76,24 +103,43 @@ export default function MovieHero({ movie }: Props) {
               {movie.descripcion}
             </p>
 
-            <div className="flex flex-wrap gap-4 pt-4">
-              <button className="flex items-center gap-2.5 rounded-full bg-[#3a86ff] px-10 py-4 font-bold text-lg hover:scale-105 transition-all shadow-[0_0_25px_rgba(58,134,255,0.4)]">
-                <Play size={24} fill="white" /> Ver Ahora
+            <div className="flex flex-row flex-wrap md:flex-nowrap items-center gap-2 sm:gap-4 pt-4 w-full">
+              <button className="flex-1 md:flex-none flex items-center justify-center gap-1.5 sm:gap-2.5 rounded-full bg-[#3a86ff] px-3 py-3 sm:px-6 sm:py-3 md:px-10 md:py-4 font-bold text-sm sm:text-base md:text-lg hover:scale-105 transition-all shadow-[0_0_25px_rgba(58,134,255,0.4)]">
+                <Play fill="white" className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" /> Ver Ahora
               </button>
               
               {/* 4. Cambiamos la etiqueta <a> por un <button> que actualiza el estado */}
               {movie.rutaTrailer && (
                 <button 
                   onClick={() => setIsTrailerOpen(true)}
-                  className="flex items-center gap-2.5 rounded-full bg-red-600/20 px-10 py-4 font-bold text-lg border border-red-600/50 hover:bg-red-600/40 transition-all"
+                  className="flex-1 md:flex-none flex items-center justify-center gap-1.5 sm:gap-2.5 rounded-full bg-red-600/20 px-3 py-3 sm:px-6 sm:py-3 md:px-10 md:py-4 font-bold text-sm sm:text-base md:text-lg border border-red-600/50 hover:bg-red-600/40 transition-all"
                 >
-                  <Youtube size={24} className="text-red-500" /> Ver Trailer
+                  <Youtube className="text-red-500 w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" /> Ver Trailer
                 </button>
               )}
+
+              {/* Botón de Favorito */}
+              <button 
+                onClick={handleToggleFavorite}
+                disabled={isLoadingFav}
+                aria-label="Agregar a favoritos"
+                className="shrink-0 flex items-center justify-center w-11 h-11 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-full bg-white/10 border border-white/20 hover:bg-white/20 transition-all active:scale-90"
+              >
+                <Heart 
+                  className={`w-5 h-5 md:w-6 md:h-6 transition-colors duration-300 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-white'}`} 
+                />
+              </button>
             </div>
           </div>
         </div>
       </section>
+
+      {/* TOAST NOTIFICATION */}
+      {toastMessage && (
+        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[110] bg-black/80 backdrop-blur-md border border-white/10 text-white px-6 py-3 rounded-full shadow-2xl animate-bounce">
+          {toastMessage}
+        </div>
+      )}
 
       {/* 5. MODAL DEL TRÁILER */}
       {isTrailerOpen && movie.rutaTrailer && (
