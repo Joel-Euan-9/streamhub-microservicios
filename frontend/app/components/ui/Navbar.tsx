@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
+import { getUserProfile, upgradePlan } from "@/app/actions/profile";
 
 // Definimos lo que necesitamos de la película para el buscador
 interface SearchResult {
@@ -14,7 +15,17 @@ interface SearchResult {
 
 export default function Navbar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [userPlan, setUserPlan] = useState<string | null>(null);
+  const [showStudioModal, setShowStudioModal] = useState(false);
+  const [isUpgrading, setIsUpgrading] = useState(false);
+
+  useEffect(() => {
+    getUserProfile().then((data) => {
+      if (data) setUserPlan(data.plan);
+    });
+  }, []);
   
   // --- NUEVOS ESTADOS PARA EL BUSCADOR ---
   const [searchTerm, setSearchTerm] = useState("");
@@ -87,6 +98,7 @@ export default function Navbar() {
   const isActividad = pathname === "/miactividad";
 
   return (
+    <>
     <nav className="fixed left-0 top-0 z-50 flex h-[72px] w-full items-center justify-between border-b border-white/5 bg-[rgba(11,12,21,0.85)] px-4 backdrop-blur-xl sm:px-5 md:h-20 md:px-10">
       <div className="flex min-w-0 items-center gap-3 md:gap-10">
         <button
@@ -176,12 +188,21 @@ export default function Navbar() {
             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
           </svg>
         </button>
-        <Link href="#" className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-[rgba(255,255,255,0.05)] py-1.5 pl-1.5 pr-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-white/10 sm:pr-4">
+        <button 
+          onClick={(e) => {
+            e.preventDefault();
+            if (userPlan === "STUDIO") {
+              router.push("/studio");
+            } else {
+              setShowStudioModal(true);
+            }
+          }}
+          className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-[rgba(255,255,255,0.05)] py-1.5 pl-1.5 pr-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-white/10 sm:pr-4">
           <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-tr from-[#00f2fe] to-[#4facfe] shadow-[0_0_10px_rgba(79,172,254,0.5)]">
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0b0c15" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
           </div>
           <span className="hidden xl:inline">Studio</span>
-        </Link>
+        </button>
 
         <Link href="/micuenta" className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-[rgba(255,255,255,0.05)] py-1.5 pl-1.5 pr-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-white/10 sm:pr-4">
           <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-tr from-[#00f2fe] to-[#4facfe] shadow-[0_0_10px_rgba(79,172,254,0.5)]">
@@ -257,5 +278,76 @@ export default function Navbar() {
         </div>
       )}
     </nav>
+
+      {/* --- MODAL DE STUDIO --- */}
+      {showStudioModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm">
+          <div className="relative w-full max-w-md overflow-hidden rounded-2xl border border-white/10 bg-[#0b0c15] p-6 shadow-2xl">
+            <div className="absolute -right-20 -top-20 h-40 w-40 rounded-full bg-[#00f2fe]/20 blur-[50px]" />
+            
+            <button 
+              onClick={() => setShowStudioModal(false)}
+              className="absolute right-4 top-4 text-[#aeb4c0] hover:text-white"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+
+            <div className="mb-6 flex flex-col items-center text-center">
+              <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-tr from-[#00f2fe] to-[#4facfe] shadow-[0_0_20px_rgba(79,172,254,0.4)]">
+                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#0b0c15" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+              </div>
+              <h3 className="text-2xl font-bold text-white">Desbloquea StreamHub Studio</h3>
+              <p className="mt-2 text-sm text-[#aeb4c0]">Lleva tu experiencia al siguiente nivel y conviértete en un creador.</p>
+            </div>
+
+            <ul className="mb-8 space-y-3">
+              {[
+                "Sube y monetiza tus propias películas",
+                "Accede a métricas avanzadas de tu audiencia",
+                "Recibe comisiones directas a tu billetera",
+                "Destaca tu contenido en la página principal"
+              ].map((benefit, i) => (
+                <li key={i} className="flex items-start gap-3 text-sm text-white">
+                  <div className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[#00f2fe]/20 text-[#00f2fe]">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                  </div>
+                  {benefit}
+                </li>
+              ))}
+            </ul>
+
+            <button
+              disabled={isUpgrading}
+              onClick={async () => {
+                setIsUpgrading(true);
+                const res = await upgradePlan("STUDIO");
+                if (res.success) {
+                  setUserPlan("STUDIO");
+                  setShowStudioModal(false);
+                  router.push("/studio");
+                } else {
+                  alert(res.error);
+                  setIsUpgrading(false);
+                }
+              }}
+              className="flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-[#00f2fe] to-[#4facfe] py-3 text-sm font-bold text-[#0b0c15] transition hover:opacity-90 disabled:opacity-50"
+            >
+              {isUpgrading ? "Actualizando..." : "Mejorar a Plan Studio"}
+            </button>
+            
+            <button
+              onClick={() => setShowStudioModal(false)}
+              className="mt-3 flex w-full items-center justify-center rounded-xl bg-white/5 py-3 text-sm font-bold text-white transition hover:bg-white/10"
+            >
+              Quizás más tarde
+            </button>
+
+            <p className="mt-4 text-center text-xs text-[#aeb4c0]">
+              Al mejorar tu plan, aceptas los términos de creadores.
+            </p>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
