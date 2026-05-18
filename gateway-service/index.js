@@ -9,7 +9,11 @@ const cookieParser = require('cookie-parser');
 
 const app = express();
 
-app.use(cors());
+app.use(cors({
+  origin: "http://localhost:3000",
+  credentials: true
+}));
+
 app.use(express.json());
 app.use(cookieParser());
 
@@ -324,7 +328,14 @@ app.put('/api/usuarios/:id/plan', async (req, res) => {
 
 app.post('/api/auth/register', async (req, res) => {
   try {
-    const resp = await axios.post(`${USERS_URL}/register`, req.body);
+    const resp = await axios.post(`${USERS_URL}/register`, req.body, {
+      withCredentials: true
+    });
+    const cookies = resp.headers['set-cookie'];
+
+    if (cookies) {
+      res.setHeader('Set-Cookie', cookies);
+    }
     res.json(resp.data);
   } catch (error) {
     if (error.response) {
@@ -603,7 +614,7 @@ app.get('/api/favoritos', authMiddleware, async (req, res) => {
     const detallesResp = await axios.post(`${CATALOG_URL}/peliculas/batch`, {
       ids: idsPeliculas
     });
-    
+
     const detallesPeliculas = detallesResp.data;
 
     // 3. Combinar datos

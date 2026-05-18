@@ -35,6 +35,7 @@ export async function registerUser(formData: FormData) {
             headers: {
                 "Content-Type": "application/json"
             },
+            credentials: "include",
             body: JSON.stringify({
                 username,
                 email,
@@ -52,7 +53,8 @@ export async function registerUser(formData: FormData) {
 
         return {
             success: true,
-            userId: data.userId
+            token: data.token,
+            userId: data.user.id
         };
 
     } catch (error: any) {

@@ -5,9 +5,15 @@ const app = express();
 const prisma = new PrismaClient();
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
-
+const cors = require('cors');
+const cookieParser = require('cookie-parser');
 
 app.use(express.json());
+app.use(cookieParser());
+app.use(cors({
+  origin: "http://localhost:3000",
+  credentials: true
+}));
 
 // Actualizar progreso (Seguir viendo)
 app.post('/historial', async (req, res) => {
@@ -64,15 +70,18 @@ app.delete('/historial/:usuarioId', async (req, res) => {
   }
 });
 
-// Crear usuario (simplificado)
-
+// Crear usuario
 app.post('/register', async (req, res) => {
   try {
-    const { username, email, password } = req.body;
+    let { username, email, password } = req.body;
 
+    // Normalizar email
+    email = email?.toLowerCase();
 
     if (!email || !password) {
-      return res.status(400).json({ error: "Email y password requeridos" });
+      return res.status(400).json({
+        error: "Email y password requeridos"
+      });
     }
 
     // Verificar si ya existe
@@ -81,11 +90,15 @@ app.post('/register', async (req, res) => {
     });
 
     if (existingUser) {
-      return res.status(400).json({ error: "Ya existe una cuenta con ese correo electrónico" });
+      return res.status(400).json({
+        error: "El correo ya está registrado"
+      });
     }
 
+    // Hashear password
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Crear usuario
     const user = await prisma.user.create({
       data: {
         email,
@@ -94,16 +107,36 @@ app.post('/register', async (req, res) => {
       }
     });
 
-    res.json({
-      message: "Usuario creado",
-      userId: user.id
+    // Generar token (autologin)
+    const token = jwt.sign(
+      {
+        userId: user.id,
+        email: user.email
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" }
+    );
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: false, // true en producción con https
+      sameSite: "lax",
+      path: "/"
+    });
+
+    return res.status(201).json({
+      token,
+      user: {
+        id: user.id,
+        email: user.email
+      }
     });
 
   } catch (error) {
-    console.error("ERROR REGISTER:", error); // 👈 CLAVE
-    res.status(500).json({
-      error: "Error en registro",
-      detalle: error.message
+    console.error("ERROR REGISTER:", error);
+
+    return res.status(500).json({
+      error: "Error interno en el registro"
     });
   }
 });
@@ -134,9 +167,6 @@ app.post('/login', async (req, res) => {
     if (!isValid) {
       return res.status(400).json({ error: "Credenciales inválidas" });
     }
-
-    // 👇 AGREGA ESTO TAMBIÉN
-
 
     const token = jwt.sign(
       {
@@ -268,7 +298,7 @@ app.put('/profile/name/:id', async (req, res) => {
     if (!name || name.trim() === "") {
       return res.status(400).json({ error: "El nombre no puede estar vacío" });
     }
-    
+
     await prisma.user.update({
       where: { id: req.params.id },
       data: { name: name.trim() }
@@ -302,7 +332,7 @@ app.post('/profile/password/verify/:id', async (req, res) => {
 app.put('/profile/password/:id', async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
-    
+
     const user = await prisma.user.findUnique({ where: { id: req.params.id } });
     if (!user) return res.status(404).json({ error: "Usuario no encontrado" });
 
@@ -313,7 +343,7 @@ app.put('/profile/password/:id', async (req, res) => {
     if (isSame) return res.status(400).json({ error: "La nueva contraseña no puede ser igual a la anterior" });
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
-    
+
     await prisma.user.update({
       where: { id: req.params.id },
       data: { password: hashedPassword }
@@ -329,7 +359,7 @@ app.put('/profile/password/:id', async (req, res) => {
 app.put('/profile/plan/:id', async (req, res) => {
   try {
     const { plan } = req.body; // 'BASIC', 'PREMIUM', o 'STUDIO'
-    
+
     const user = await prisma.user.update({
       where: { id: req.params.id },
       data: { plan: plan },
@@ -379,7 +409,7 @@ app.post('/favoritos/toggle', async (req, res) => {
   try {
     console.log("BODY REQ FAVORITOS TOGGLE:", req.body);
     const { usuarioId, peliculaId } = req.body;
-    
+
     // Verificar si existe
     const existente = await prisma.favorito.findUnique({
       where: {

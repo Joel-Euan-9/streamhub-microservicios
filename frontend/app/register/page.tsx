@@ -11,6 +11,7 @@ import { zodResolver } from "@hookform/resolvers/zod"; // Importamos el puente c
 import SubscriptionsSection from "../components/SubscriptionsSection";
 import PaymentForm from "../components/PaymentForm";
 import { X } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 // Definimos el esquema de validación (¡Se queda igual!)
 const registerSchema = z.object({
@@ -25,7 +26,6 @@ const registerSchema = z.object({
     message: "Las contraseñas no coinciden",
     path: ["confirmPassword"],
 });
-
 // Inferimos el tipo de Typescript basado en tu esquema de Zod
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
@@ -35,6 +35,8 @@ export default function Page() {
     const [userId, setUserId] = useState<string>("");
     const [selectedPlan, setSelectedPlan] = useState<string>("");
     const [error, setError] = useState<string>("");
+
+    const router = useRouter();
 
     // Configuración mágica de React Hook Form
     const {
@@ -46,20 +48,26 @@ export default function Page() {
         mode: "onBlur", // <--- ¡LA MAGIA! Valida cuando el usuario sale del input (puedes cambiarlo a "onChange" para validar en cada tecla)
     });
 
+
+
     // Esta función SOLO se ejecuta si NO hay errores de Zod
     const onSubmit = async (data: RegisterFormValues) => {
         setServerError("");
 
-        // Como tu Server Action (registerUser) probablemente espera un FormData,
-        // lo construimos rápidamente con los datos ya validados:
-        const formData = new FormData();
-        formData.append("username", data.username);
-        formData.append("email", data.email);
-        formData.append("password", data.password);
-        formData.append("confirmPassword", data.confirmPassword);
+        const res = await fetch("/api/auth/register", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            credentials: "include",
+            body: JSON.stringify({
+                username: data.username,
+                email: data.email,
+                password: data.password
+            })
+        });
 
-        // Enviamos al servidor
-        const response = await registerUser(formData);
+        const response = await res.json();
 
         if (response?.error) {
             setServerError(response.error);
@@ -67,8 +75,8 @@ export default function Page() {
             return;
         }
 
-        if (response.userId) {
-            setUserId(response.userId);
+        if (response.user?.id) {
+            setUserId(response.user.id);
         }
 
         toast.success("¡Cuenta creada!", {
@@ -91,12 +99,11 @@ export default function Page() {
                         } else {
                             toast.success(`Plan ${plan} seleccionado`, {
                                 id: "plan-setup",
-                                description: "Te estamos redirigiendo al login...",
+                                description: "Te estamos redirigiendo al inicio...",
                                 duration: 3000,
                             });
-                            setTimeout(() => {
-                                window.location.href = "/login";
-                            }, 1500);
+                            router.refresh();
+                            router.push("/inicio");
                         }
                     } else {
                         setSelectedPlan(plan);
@@ -121,12 +128,11 @@ export default function Page() {
                         } else {
                             toast.success("¡Suscripción activa!", {
                                 id: "payment-setup",
-                                description: "Te estamos redirigiendo al login...",
+                                description: "Te estamos redirigiendo al inicio...",
                                 duration: 3000,
                             });
-                            setTimeout(() => {
-                                window.location.href = "/login";
-                            }, 1500);
+                            router.refresh();
+                            router.push("/inicio");
                         }
                     }}
                 />

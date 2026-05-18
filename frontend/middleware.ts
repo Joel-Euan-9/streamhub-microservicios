@@ -14,7 +14,7 @@ export function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL("/login", req.url));
   }
 
-  if (token && (pathname === "/login" || pathname === "/register")) {
+  if (token && (pathname === "/login" || pathname === "/register") && req.method === "GET") {
     return NextResponse.redirect(new URL("/inicio", req.url));
   }
 
@@ -22,5 +22,5 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/peliculas/:path*", "/inicio"]
+  matcher: ["/peliculas/:path*", "/inicio", "/register", "/login"]
 };

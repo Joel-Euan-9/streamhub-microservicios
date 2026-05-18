@@ -1,6 +1,6 @@
 import * as React from "react";
 // Importamos una utilidad para clases condicionales. Si no la tienes, ver abajo.
-import { cn } from "@/lib/utils"; 
+import { cn } from "@/lib/utils";
 
 // Icono de advertencia de error (SVG)
 const ErrorIcon = () => (
@@ -23,16 +23,17 @@ const ErrorIcon = () => (
 export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label: string;
   error?: string; // Propiedad para pasar el mensaje de error
+  rightElement?: React.ReactNode; // Elemento opcional a la derecha (como un icono)
 }
 
 // Usamos forwardRef para integrarlo con React Hook Form
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, type, label, error, ...props }, ref) => {
+  ({ className, type, label, error, rightElement, ...props }, ref) => {
     return (
       <div className="flex flex-col space-y-1.5 w-full">
-        
+
         {/* 1. Estilo del Label: Se vuelve rojo si hay error */}
-        <label 
+        <label
           className={cn(
             "text-sm font-medium transition-colors duration-200",
             error ? "text-red-500" : "text-white/70"
@@ -40,21 +41,30 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         >
           {label}
         </label>
-        
+
         {/* 2. Estilo del Input: Borde rojo si hay error */}
-        <input
-          type={type}
-          className={cn(
-            // Clases base
-            "flex h-10 w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white transition-all duration-200 focus:outline-none focus:ring-1 focus:ring-blue-400 disabled:cursor-not-allowed disabled:opacity-50",
-            // Clases de error
-            error && "border-red-500 focus:ring-red-500 placeholder:text-red-500", 
-            className
+        <div className="relative">
+          <input
+            type={type}
+            className={cn(
+              // Clases base
+              "flex h-10 w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white transition-all duration-200 focus:outline-none focus:ring-1 focus:ring-blue-400 disabled:cursor-not-allowed disabled:opacity-50",
+              // Padding derecho si hay rightElement
+              rightElement && "pr-12",
+              // Clases de error
+              error && "border-red-500 focus:ring-red-500 placeholder:text-red-500",
+              className
+            )}
+            ref={ref}
+            {...props}
+          />
+          {rightElement && (
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center">
+              {rightElement}
+            </div>
           )}
-          ref={ref}
-          {...props}
-        />
-        
+        </div>
+
         {/* 3. Estilo del Mensaje de Error: Incluye el icono */}
         {error && (
           <div className="flex items-start text-xs text-red-500 mt-1 transition-all duration-200">
