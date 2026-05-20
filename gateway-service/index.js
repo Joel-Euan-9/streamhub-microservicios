@@ -571,6 +571,25 @@ app.put('/api/perfil/plan', authMiddleware, async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/perfil/ver-pelicula:
+ *   post:
+ *     summary: Registra y valida la reproducción diaria para usuarios BASIC
+ *     tags:
+ *       - Perfil
+ */
+app.post('/api/perfil/ver-pelicula', authMiddleware, async (req, res) => {
+  try {
+    const { peliculaId } = req.body;
+    const resp = await axios.post(`${USERS_URL}/usuarios/${req.user.userId}/ver-pelicula`, { peliculaId });
+    res.json(resp.data);
+  } catch (error) {
+    console.error("Error en gateway al validar reproducción diaria:", error.message);
+    res.status(500).json({ error: "Error al registrar reproducción diaria" });
+  }
+});
+
 // --- RUTAS DE FAVORITOS ---
 
 /**

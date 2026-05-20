@@ -26,6 +26,7 @@ model User {
   // Nuevos campos para los planes y billetera
   plan               Plan            @default(BASIC)
   peliculasVistasHoy Int             @default(0) @map("peliculas_vistas_hoy")
+  peliculasVistasHoyIds String       @default("") @map("peliculas_vistas_hoy_ids")
   fechaUltimaVista   DateTime?       @map("fecha_ultima_vista")
   saldoBilletera     Float           @default(0.0) @map("saldo_billetera")
   

@@ -48,3 +48,25 @@ export async function upgradePlan(plan: string) {
     return { success: false, error: "Error de conexión" };
   }
 }
+
+/**
+ * Registra y valida la visualización de una película para el límite de 5 diarias en plan BASIC.
+ */
+export async function registerMovieView(peliculaId: string) {
+  try {
+    const res = await fetchWithAuth("http://gateway-service:8000/api/perfil/ver-pelicula", {
+      method: "POST",
+      body: JSON.stringify({ peliculaId }),
+    });
+
+    if (!res.ok) {
+      return { success: false, error: "Error en el servidor al registrar reproducción." };
+    }
+
+    const data = await res.json();
+    return data; // Retorna { success: boolean, allowed: boolean, error?: string, viewsCount: number }
+  } catch (error) {
+    console.error("Error en registerMovieView:", error);
+    return { success: false, error: "Error de conexión." };
+  }
+}

@@ -129,7 +129,7 @@ async function main() {
       rutaVideo: 'ciguenias.mp4', 
       rutaImagenFondo: 'https://beam-images.warnermediacdn.com/BEAM_LWM_DELIVERABLES/a8b36b0b-5644-4179-84a7-cce257ff8205/13c58693244ae002cf2a4c302eab3e27464e9afd.jpg?host=wbd-images.prod-vod.h264.io&partner=beamcom',
       rutaTrailer: 'https://youtu.be/_2DO65R2Kds',
-      requierePremium: false,
+      requierePremium: true, // ¡PREMIUM!
       tipoContenido: 'ORIGINAL',
       vistasTotales: 4100, likesTotales: 600, dislikesTotales: 30,
       generos: { connect: [{ id: aventura.id }, { id: animacion.id }, { id: comedia.id }, { id: familia.id }] }
@@ -146,7 +146,7 @@ async function main() {
       rutaVideo: 'malefica-maestra-del-mal.mp4', 
       rutaImagenFondo: 'https://sm.ign.com/t/ign_es/screenshot/default/blob_3q2v.1280.jpg',
       rutaTrailer: 'https://youtu.be/KyoDGNYUimM',
-      requierePremium: false,
+      requierePremium: true, // ¡PREMIUM!
       tipoContenido: 'ORIGINAL',
       vistasTotales: 8800, likesTotales: 1350, dislikesTotales: 110,
       generos: { connect: [{ id: fantasia.id }, { id: aventura.id }, { id: familia.id }] }
@@ -163,7 +163,7 @@ async function main() {
       rutaVideo: 'miss-pregrine-y-los-ninios-peculiares.mp4', 
       rutaImagenFondo: 'https://m.media-amazon.com/images/S/pv-target-images/0a8d2e7dcb0d71d5a71829e5f453c5fc66870bd06900894216e475938e04ca5b.jpg',
       rutaTrailer: 'https://youtu.be/6WgCZWiCkOg',
-      requierePremium: false,
+      requierePremium: true, // ¡PREMIUM!
       tipoContenido: 'ORIGINAL',
       vistasTotales: 5600, likesTotales: 920, dislikesTotales: 40,
       generos: { connect: [{ id: fantasia.id }, { id: aventura.id }, { id: familia.id }, { id: drama.id }] }

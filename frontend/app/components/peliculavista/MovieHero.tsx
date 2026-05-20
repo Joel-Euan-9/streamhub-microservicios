@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { Play, Star, CalendarDays, Youtube, X, Heart } from 'lucide-react'; // 2. Importamos 'X', 'Heart'
 import { toggleFavoriteAction } from '@/app/actions/favoritos';
+import { useRouter } from 'next/navigation';
+import { upgradePlan } from '@/app/actions/profile';
 
 interface Props {
   movie: {
@@ -15,18 +17,20 @@ interface Props {
     rutaTrailer: string;
     duracion: number;
     generos?: { nombre: string }[];
+    requierePremium?: boolean; // Prop para saber si es premium
   };
   initialIsFavorite?: boolean;
+  userPlan?: string; // Plan del usuario logueado
+  isDailyLimitReached?: boolean; // Prop para saber si llegó al límite
 }
 
-export default function MovieHero({ movie, initialIsFavorite = false }: Props) {
-  // 3. Estado para controlar si el modal del tráiler está abierto
+export default function MovieHero({ movie, initialIsFavorite = false, userPlan = 'BASIC', isDailyLimitReached = false }: Props) {
+  const router = useRouter();
   const [isTrailerOpen, setIsTrailerOpen] = useState(false);
-  
-  // Estado para Favoritos
   const [isFavorite, setIsFavorite] = useState(initialIsFavorite);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isLoadingFav, setIsLoadingFav] = useState(false);
+  const [isUpgrading, setIsUpgrading] = useState(false);
 
   // Formatear fecha completa
   const fechaCompleta = new Date(movie.fechaLanzamiento).toLocaleDateString('es-ES', {
@@ -54,6 +58,25 @@ export default function MovieHero({ movie, initialIsFavorite = false }: Props) {
     setIsLoadingFav(false);
   };
 
+  const handleUpgrade = async () => {
+    setIsUpgrading(true);
+    try {
+      const res = await upgradePlan("PREMIUM");
+      if (res.success) {
+        router.refresh();
+      } else {
+        setToastMessage(res.error || "Error al actualizar plan");
+        setTimeout(() => setToastMessage(null), 3000);
+      }
+    } catch (err) {
+      console.error(err);
+      setToastMessage("Error de conexión");
+      setTimeout(() => setToastMessage(null), 3000);
+    } finally {
+      setIsUpgrading(false);
+    }
+  };
+
   // Función para convertir link normal de YT a link de "embed" (reutilizada del reproductor)
   const getEmbedUrl = (url: string) => {
     if (!url) return '';
@@ -66,6 +89,8 @@ export default function MovieHero({ movie, initialIsFavorite = false }: Props) {
     }
     return url;
   };
+
+  const isLocked = (movie.requierePremium && userPlan === 'BASIC') || isDailyLimitReached;
 
   return (
     <>
@@ -104,10 +129,36 @@ export default function MovieHero({ movie, initialIsFavorite = false }: Props) {
             </p>
 
             <div className="flex flex-row flex-wrap md:flex-nowrap items-center gap-2 sm:gap-4 pt-4 w-full">
-              <button className="flex-1 md:flex-none flex items-center justify-center gap-1.5 sm:gap-2.5 rounded-full bg-[#3a86ff] px-3 py-3 sm:px-6 sm:py-3 md:px-10 md:py-4 font-bold text-sm sm:text-base md:text-lg hover:scale-105 transition-all shadow-[0_0_25px_rgba(58,134,255,0.4)]">
-                <Play fill="white" className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" /> Ver Ahora
-              </button>
-              
+              {isLocked ? (
+                <button 
+                  onClick={handleUpgrade}
+                  disabled={isUpgrading}
+                  className="flex-1 md:flex-none flex items-center justify-center gap-1.5 sm:gap-2.5 rounded-full bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-400 px-3 py-3 sm:px-6 sm:py-3 md:px-10 md:py-4 font-black text-sm sm:text-base md:text-lg text-black hover:scale-105 transition-all shadow-[0_0_25px_rgba(245,158,11,0.4)] disabled:opacity-50"
+                >
+                  {isUpgrading ? (
+                    <>
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-black border-t-transparent" />
+                      Actualizando...
+                    </>
+                  ) : (
+                    <>
+                      <Star fill="black" className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" /> Mejorar a Premium
+                    </>
+                  )}
+                </button>
+              ) : (
+                <button 
+                  onClick={() => {
+                    const playerElement = document.getElementById("movie-player");
+                    if (playerElement) {
+                      playerElement.scrollIntoView({ behavior: "smooth" });
+                    }
+                  }}
+                  className="flex-1 md:flex-none flex items-center justify-center gap-1.5 sm:gap-2.5 rounded-full bg-[#3a86ff] px-3 py-3 sm:px-6 sm:py-3 md:px-10 md:py-4 font-bold text-sm sm:text-base md:text-lg hover:scale-105 transition-all shadow-[0_0_25px_rgba(58,134,255,0.4)]"
+                >
+                  <Play fill="white" className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" /> Ver Ahora
+                </button>
+              )}          
               {/* 4. Cambiamos la etiqueta <a> por un <button> que actualiza el estado */}
               {movie.rutaTrailer && (
                 <button 

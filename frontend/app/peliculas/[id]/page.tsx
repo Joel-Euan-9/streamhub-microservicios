@@ -1,9 +1,12 @@
 import Navbar from '@/app/components/ui/Navbar';
 import MovieHero from '@/app/components/peliculavista/MovieHero';
 import MoviePlayer from '@/app/components/peliculavista/MoviePlayer';
+import PaywallBlock from '@/app/components/peliculavista/PaywallBlock';
+import DailyLimitPaywall from '@/app/components/peliculavista/DailyLimitPaywall';
 import { notFound } from 'next/navigation';
 import { fetchWithAuth } from '@/lib/api';
 import { getProgressAction } from '@/app/actions/historial';
+import { getUserProfile, registerMovieView } from '@/app/actions/profile';
 
 // Función para consultar si la película es favorita
 async function checkIsFavorite(id: string) {
@@ -47,9 +50,24 @@ export default async function PeliculaDetailPage({ params }: Props) {
     notFound();
   }
 
+  // Obtener perfil y plan del usuario
+  const profile = await getUserProfile();
+  const userPlan = profile?.plan || 'BASIC';
+
+  // Validar límite diario si el usuario tiene plan básico
+  let isDailyLimitReached = false;
+  if (userPlan === 'BASIC') {
+    const viewRegistration = await registerMovieView(id);
+    if (viewRegistration && viewRegistration.allowed === false && viewRegistration.error === 'daily_limit_reached') {
+      isDailyLimitReached = true;
+    }
+  }
+
   const initialIsFavorite = await checkIsFavorite(id);
   const progressData = await getProgressAction(id);
   const initialTime = progressData.completada ? 0 : (progressData.minutoPausa || 0);
+
+  const isLocked = movie.requierePremium && userPlan === 'BASIC';
 
   return (
     <>
@@ -57,14 +75,28 @@ export default async function PeliculaDetailPage({ params }: Props) {
       
       <main className="pt-[70px] bg-[#020817]">
         
-        <MovieHero movie={{ ...movie, id }} initialIsFavorite={initialIsFavorite} />
-
-        <MoviePlayer 
-          videoUrl={movie.rutaVideoCompleta}
-          posterUrl={movie.rutaImagenFondo}
-          peliculaId={id}
-          initialTime={initialTime}
+        <MovieHero 
+          movie={{ ...movie, id }} 
+          initialIsFavorite={initialIsFavorite} 
+          userPlan={userPlan} 
+          isDailyLimitReached={isDailyLimitReached}
         />
+
+        <div id="movie-player">
+          {isLocked ? (
+            <PaywallBlock movieTitle={movie.titulo} />
+          ) : isDailyLimitReached ? (
+            <DailyLimitPaywall />
+          ) : (
+            <MoviePlayer 
+              videoUrl={movie.rutaVideoCompleta}
+              posterUrl={movie.rutaImagenFondo}
+              peliculaId={id}
+              initialTime={initialTime}
+              userPlan={userPlan}
+            />
+          )}
+        </div>
 
         {/* Aquí podrías añadir secciones extra como "Películas Similares" más adelante */}
       </main>

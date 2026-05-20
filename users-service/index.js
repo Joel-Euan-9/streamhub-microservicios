@@ -372,6 +372,82 @@ app.put('/profile/plan/:id', async (req, res) => {
   }
 });
 
+// Validar y registrar límite diario de visualizaciones (Plan Básico)
+app.post('/usuarios/:id/ver-pelicula', async (req, res) => {
+  const { id } = req.params;
+  const { peliculaId } = req.body;
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id }
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    }
+
+    // Si no es Básico, no aplica restricción
+    if (user.plan !== 'BASIC') {
+      return res.json({ success: true, allowed: true, viewsCount: 0 });
+    }
+
+    const todayStr = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    const lastViewStr = user.fechaUltimaVista ? new Date(user.fechaUltimaVista).toISOString().split('T')[0] : null;
+
+    let viewedIds = [];
+    let isNewDay = todayStr !== lastViewStr;
+
+    if (!isNewDay && user.peliculasVistasHoyIds) {
+      viewedIds = user.peliculasVistasHoyIds.split(',').filter(x => x.trim() !== "");
+    }
+
+    const alreadyViewed = viewedIds.includes(peliculaId);
+
+    if (alreadyViewed) {
+      // Si ya la vio hoy, se le permite reproducir sin problemas
+      return res.json({ success: true, allowed: true, viewsCount: viewedIds.length });
+    }
+
+    // Si es una nueva película en el mismo día y ya llegó a 5
+    if (!isNewDay && viewedIds.length >= 5) {
+      return res.json({ 
+        success: false, 
+        allowed: false, 
+        error: "daily_limit_reached", 
+        message: "Has alcanzado el límite diario de 5 películas en tu plan Básico.",
+        viewsCount: viewedIds.length 
+      });
+    }
+
+    // Agregar la nueva película a la lista de hoy
+    let newViewedIds = [];
+    if (isNewDay) {
+      newViewedIds = [peliculaId];
+    } else {
+      newViewedIds = [...viewedIds, peliculaId];
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id },
+      data: {
+        peliculasVistasHoy: newViewedIds.length,
+        peliculasVistasHoyIds: newViewedIds.join(','),
+        fechaUltimaVista: new Date()
+      }
+    });
+
+    return res.json({ 
+      success: true, 
+      allowed: true, 
+      viewsCount: newViewedIds.length 
+    });
+
+  } catch (error) {
+    console.error("Error al registrar visualización:", error);
+    res.status(500).json({ error: "Error al registrar visualización diaria" });
+  }
+});
+
 // --- FAVORITOS ---
 
 // Verificar si una película es favorita

@@ -59,11 +59,16 @@ export default async function InicioPage() {
   const topPeliculas = await getTopPeliculas();
 
   const historialRes = await getHistorialAction();
-  const historial = Array.isArray(historialRes) ? historialRes.slice(0, 10) : [];
+  const historial = Array.isArray(historialRes) 
+    ? historialRes.filter((item: any) => item && item.pelicula).slice(0, 10) 
+    : [];
 
   const favoritosAll = await getFavoritosAction();
-  const favoritos = Array.isArray(favoritosAll) ? favoritosAll.slice(0, 5) : [];
-  const favoritosTotal = Array.isArray(favoritosAll) ? favoritosAll.length : 0;
+  const validFavoritosAll = Array.isArray(favoritosAll) 
+    ? favoritosAll.filter((fav: any) => fav && fav.pelicula) 
+    : [];
+  const favoritos = validFavoritosAll.slice(0, 5);
+  const favoritosTotal = validFavoritosAll.length;
 
   return (
     <>
@@ -85,6 +90,7 @@ export default async function InicioPage() {
                 year={new Date(movie.fechaLanzamiento).getFullYear().toString()}
                 genre={movie.generos?.[0]?.nombre || "Estreno"}
                 img={movie.rutaCaratula}
+                requierePremium={movie.requierePremium}
               />
             ))}
           </CarouselContainer>

@@ -10,21 +10,49 @@ interface Props {
   posterUrl: string;
   peliculaId?: string;
   initialTime?: number;
+  userPlan?: string; // Plan del usuario actual ('BASIC', 'PREMIUM', 'STUDIO')
 }
 
-export default function MoviePlayer({ videoUrl, posterUrl, peliculaId, initialTime = 0 }: Props) {
+// Pool de 8 IDs de anuncios de YouTube recopilados
+const YOUTUBE_ADS = [
+  "2NMzLEvyjeo", // Coca-Cola
+  "gvF2lw5GoRs",
+  "a5MkRxo3YIY",
+  "Y7wu2PqOGEQ",
+  "Qt2AN8QdZSI",
+  "AlgDTup63GQ",
+  "vZpD0p4rTXc",
+  "EpK0P3vfDJc"
+];
+
+export default function MoviePlayer({ videoUrl, posterUrl, peliculaId, initialTime = 0, userPlan = 'BASIC' }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null); // Referencia para el temporizador
   const initialTimeSetRef = useRef(false);
   const lastSavedTimeRef = useRef(-1);
-  
+
+  // Estados estándar del reproductor
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(1);
   const [isSeeking, setIsSeeking] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [showControls, setShowControls] = useState(true); // Nuevo estado para controlar la visibilidad
+  const [showControls, setShowControls] = useState(true);
+
+  // Estados del sistema de anuncios
+  const [showAd, setShowAd] = useState(false);
+  const [adTimeLeft, setAdTimeLeft] = useState(15);
+  const [currentAdId, setCurrentAdId] = useState<string | null>(null);
+  const [preRollPlayed, setPreRollPlayed] = useState(false);
+  const [midRollPlayed, setMidRollPlayed] = useState(false);
+
+  // Sincronizar estados en referencias para evitar problemas de clousure en los event listeners
+  const showAdRef = useRef(false);
+  showAdRef.current = showAd;
+
+  const preRollPlayedRef = useRef(false);
+  preRollPlayedRef.current = preRollPlayed;
 
   // Escuchar la tecla 'Esc' para sincronizar el estado de pantalla completa
   useEffect(() => {
@@ -35,10 +63,72 @@ export default function MoviePlayer({ videoUrl, posterUrl, peliculaId, initialTi
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
 
+  // Función para disparar la lógica de un anuncio
+  const triggerAd = () => {
+    const randomIndex = Math.floor(Math.random() * YOUTUBE_ADS.length);
+    setCurrentAdId(YOUTUBE_ADS[randomIndex]);
+    setAdTimeLeft(15);
+    setShowAd(true);
+    setShowControls(false); // Ocultar controles durante el anuncio
+    
+    if (videoRef.current) {
+      videoRef.current.pause();
+      setIsPlaying(false);
+    }
+  };
+
+  // Cuenta regresiva del anuncio
+  useEffect(() => {
+    if (!showAd) return;
+
+    if (adTimeLeft <= 0) {
+      setShowAd(false);
+      setCurrentAdId(null);
+      // Reanudar la película
+      if (videoRef.current) {
+        videoRef.current.play()
+          .then(() => {
+            setIsPlaying(true);
+          })
+          .catch(err => console.error("Error al reanudar video:", err));
+      }
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setAdTimeLeft(prev => prev - 1);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [showAd, adTimeLeft]);
+
+  // Manejador central para reproducir la película y controlar pre-rolls
+  const playVideo = () => {
+    if (videoRef.current) {
+      if (userPlan === 'BASIC' && !preRollPlayedRef.current) {
+        setPreRollPlayed(true);
+        triggerAd();
+        return;
+      }
+
+      videoRef.current.play()
+        .then(() => {
+          setIsPlaying(true);
+        })
+        .catch(err => console.error("Error al reproducir video:", err));
+    }
+  };
+
   // Escuchar atajos de teclado
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // 1. Ignorar la tecla si el usuario está escribiendo en un input o textarea
+      // Si se está mostrando un anuncio, ignorar todos los atajos de teclado
+      if (showAdRef.current) {
+        e.preventDefault();
+        return;
+      }
+
+      // Ignorar la tecla si el usuario está escribiendo en un input o textarea
       if (
         document.activeElement?.tagName === 'INPUT' || 
         document.activeElement?.tagName === 'TEXTAREA'
@@ -46,14 +136,12 @@ export default function MoviePlayer({ videoUrl, posterUrl, peliculaId, initialTi
         return;
       }
 
-      // 2. Usamos un switch para manejar múltiples teclas
       switch (e.code) {
         case 'Space':
           e.preventDefault(); // Evita el scroll
           if (videoRef.current) {
             if (videoRef.current.paused) {
-              videoRef.current.play();
-              setIsPlaying(true);
+              playVideo();
             } else {
               videoRef.current.pause();
               setIsPlaying(false);
@@ -63,15 +151,15 @@ export default function MoviePlayer({ videoUrl, posterUrl, peliculaId, initialTi
           break;
 
         case 'ArrowRight':
-          e.preventDefault(); // Evita el scroll horizontal
+          e.preventDefault();
           if (videoRef.current) {
             videoRef.current.currentTime += 10;
-            setShowControls(true); // Muestra los controles para que el usuario vea el progreso
+            setShowControls(true);
           }
           break;
 
         case 'ArrowLeft':
-          e.preventDefault(); // Evita el scroll horizontal
+          e.preventDefault();
           if (videoRef.current) {
             videoRef.current.currentTime -= 10;
             setShowControls(true);
@@ -79,20 +167,18 @@ export default function MoviePlayer({ videoUrl, posterUrl, peliculaId, initialTi
           break;
 
         case 'ArrowUp':
-          e.preventDefault(); // Evita el scroll vertical
+          e.preventDefault();
           if (videoRef.current) {
-            // Usamos Math.min para asegurar que el volumen no pase de 1 (100%)
             const newVolumeUp = Math.min(videoRef.current.volume + 0.1, 1);
             videoRef.current.volume = newVolumeUp;
             setVolume(newVolumeUp);
-            setShowControls(true); // Muestra la barrita de volumen ajustándose
+            setShowControls(true);
           }
           break;
 
         case 'ArrowDown':
-          e.preventDefault(); // Evita el scroll vertical
+          e.preventDefault();
           if (videoRef.current) {
-            // Usamos Math.max para asegurar que el volumen no baje de 0 (Mute)
             const newVolumeDown = Math.max(videoRef.current.volume - 0.1, 0);
             videoRef.current.volume = newVolumeDown;
             setVolume(newVolumeDown);
@@ -101,7 +187,6 @@ export default function MoviePlayer({ videoUrl, posterUrl, peliculaId, initialTi
           break;
           
         case 'KeyF':
-          // Extra: Atajo clásico para pantalla completa con la letra F
           e.preventDefault();
           const playerContainer = videoRef.current?.parentElement;
           if (playerContainer) {
@@ -120,10 +205,12 @@ export default function MoviePlayer({ videoUrl, posterUrl, peliculaId, initialTi
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, []); // El array vacío es correcto porque interactuamos directamente con el DOM (videoRef)
+  }, [userPlan]); // Actualizar si cambia el plan
 
   // Manejar el movimiento del mouse para mostrar/ocultar controles
   const handleMouseMove = () => {
+    if (showAd) return; // Bloquear controles si hay anuncio
+
     setShowControls(true);
     
     if (controlsTimeoutRef.current) {
@@ -140,7 +227,7 @@ export default function MoviePlayer({ videoUrl, posterUrl, peliculaId, initialTi
 
   // Si el mouse sale del reproductor, ocultar controles inmediatamente
   const handleMouseLeave = () => {
-    if (isPlaying) {
+    if (isPlaying && !showAd) {
       setShowControls(false);
     }
   };
@@ -161,30 +248,42 @@ export default function MoviePlayer({ videoUrl, posterUrl, peliculaId, initialTi
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
-    if (isPlaying && duration > 0) {
+    if (isPlaying && duration > 0 && !showAd) {
       interval = setInterval(() => {
         if (videoRef.current) saveProgress(videoRef.current.currentTime, duration);
       }, 10000);
     }
     return () => clearInterval(interval);
-  }, [isPlaying, duration, peliculaId]);
+  }, [isPlaying, duration, peliculaId, showAd]);
 
   const togglePlay = () => {
+    if (showAd) return; // Deshabilitar interacción durante anuncios
+
     if (videoRef.current) {
       if (isPlaying) {
         videoRef.current.pause();
         setShowControls(true); // Mostrar controles al pausar
         saveProgress(videoRef.current.currentTime, duration); // Guardar progreso al pausar
+        setIsPlaying(false);
       } else {
-        videoRef.current.play();
+        playVideo();
       }
-      setIsPlaying(!isPlaying);
     }
   };
 
   const handleTimeUpdate = () => {
-    if (videoRef.current && !isSeeking) {
-      setCurrentTime(videoRef.current.currentTime);
+    if (videoRef.current && !isSeeking && !showAd) {
+      const current = videoRef.current.currentTime;
+      setCurrentTime(current);
+
+      // Lógica de anuncio Mid-roll al 50% de la duración
+      if (userPlan === 'BASIC' && !midRollPlayed && duration > 0) {
+        const midPoint = duration / 2;
+        if (current >= midPoint) {
+          setMidRollPlayed(true);
+          triggerAd();
+        }
+      }
     }
   };
 
@@ -200,12 +299,14 @@ export default function MoviePlayer({ videoUrl, posterUrl, peliculaId, initialTi
   };
 
   const skip = (amount: number) => {
+    if (showAd) return;
     if (videoRef.current) {
       videoRef.current.currentTime += amount;
     }
   };
 
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (showAd) return;
     const newVolume = parseFloat(e.target.value);
     setVolume(newVolume);
     if (videoRef.current) {
@@ -214,6 +315,7 @@ export default function MoviePlayer({ videoUrl, posterUrl, peliculaId, initialTi
   };
 
   const handleSeekChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (showAd) return;
     const seekTime = parseFloat(e.target.value);
     setCurrentTime(seekTime);
     if (videoRef.current) {
@@ -246,29 +348,46 @@ export default function MoviePlayer({ videoUrl, posterUrl, peliculaId, initialTi
           Reproductor de Película
         </h2>
 
-        {/* 1. Se agregó onMouseMove y onMouseLeave
-          2. Se oculta el cursor (cursor-none) cuando los controles no están visibles
-        */}
         <div 
           className={`relative aspect-video rounded-2xl overflow-hidden shadow-2xl border border-white/5 bg-black ${!showControls && isFullscreen ? 'cursor-none' : ''}`}
           onMouseMove={handleMouseMove}
           onMouseLeave={handleMouseLeave}
         >
-          
+          {/* VIDEO PRINCIPAL */}
           <video 
             ref={videoRef}
             src={videoUrl}
             poster={posterUrl}
-            className={`w-full h-full object-contain ${showControls ? 'cursor-pointer' : 'cursor-none'}`}
+            className={`w-full h-full object-contain ${showControls && !showAd ? 'cursor-pointer' : 'cursor-none'}`}
             onTimeUpdate={handleTimeUpdate}
             onLoadedMetadata={handleLoadedMetadata}
             onClick={togglePlay} 
           />
 
-          {/* 1. Se eliminó la dependencia de group-hover.
-            2. La opacidad ahora depende del estado showControls.
-            3. Se cambió de 'bg-black/60' a un degradado para no oscurecer el centro de la pantalla.
-          */}
+          {/* SUPERPOSICIÓN DE ANUNCIO DE YOUTUBE */}
+          {showAd && (
+            <div className="absolute inset-0 z-40 bg-black flex items-center justify-center pointer-events-auto">
+              {/* Bloqueador de clics/interacción para evitar que pausen el anuncio */}
+              <div className="absolute inset-0 z-50 bg-transparent cursor-not-allowed pointer-events-auto" />
+              
+              <iframe
+                src={`https://www.youtube.com/embed/${currentAdId}?autoplay=1&controls=0&mute=0&rel=0&showinfo=0&iv_load_policy=3&modestbranding=1&disablekb=1&enablejsapi=1`}
+                className="w-full h-full pointer-events-none"
+                allow="autoplay; encrypted-media"
+                frameBorder="0"
+              />
+
+              {/* Banner elegante del anuncio (Glassmorphism) */}
+              <div className="absolute bottom-6 right-6 z-55 flex items-center gap-2 rounded-xl bg-black/60 backdrop-blur-md border border-white/10 px-5 py-3 shadow-[0_4px_30px_rgba(0,0,0,0.5)]">
+                <span className="h-2 w-2 animate-ping rounded-full bg-red-500" />
+                <p className="text-sm font-semibold text-gray-200">
+                  Anuncio Patrocinado • Tu video continuará en <span className="text-[#3a86ff] font-mono text-base font-bold ml-1">{adTimeLeft}s</span>
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* CONTROLES DEL REPRODUCTOR */}
           <div className={`absolute inset-0 flex flex-col justify-end p-4 transition-opacity duration-300 z-10 pointer-events-none ${showControls || !isPlaying ? 'opacity-100' : 'opacity-0'}`}>
             
             {/* Fondo degradado oscuro solo en la base */}
@@ -285,23 +404,24 @@ export default function MoviePlayer({ videoUrl, posterUrl, peliculaId, initialTi
                 onMouseDown={() => setIsSeeking(true)}
                 onMouseUp={() => setIsSeeking(false)}
                 className="w-full h-1.5 mb-4 accent-[#3a86ff] cursor-pointer"
+                disabled={showAd}
               />
 
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
-                  <button onClick={togglePlay} className="p-2 hover:bg-white/10 rounded-full">
+                  <button onClick={togglePlay} className="p-2 hover:bg-white/10 rounded-full" disabled={showAd}>
                     {isPlaying ? <Pause className="fill-white" /> : <Play className="fill-white" />}
                   </button>
 
-                  <button onClick={() => skip(-10)} className="p-2 hover:bg-white/10 rounded-full">
+                  <button onClick={() => skip(-10)} className="p-2 hover:bg-white/10 rounded-full" disabled={showAd}>
                     <RotateCcw />
                   </button>
-                  <button onClick={() => skip(10)} className="p-2 hover:bg-white/10 rounded-full">
+                  <button onClick={() => skip(10)} className="p-2 hover:bg-white/10 rounded-full" disabled={showAd}>
                     <RotateCw />
                   </button>
 
                   <div className="flex items-center group/volume">
-                    <button className="p-2 hover:bg-white/10 rounded-full transition-colors z-10 relative">
+                    <button className="p-2 hover:bg-white/10 rounded-full transition-colors z-10 relative" disabled={showAd}>
                       {volume === 0 ? <VolumeX /> : <Volume2 />}
                     </button>
                     <input 
@@ -312,6 +432,7 @@ export default function MoviePlayer({ videoUrl, posterUrl, peliculaId, initialTi
                       value={volume}
                       onChange={handleVolumeChange}
                       className="w-0 opacity-0 group-hover/volume:w-24 group-hover/volume:opacity-100 group-hover/volume:ml-2 transition-all duration-300 accent-white cursor-pointer"
+                      disabled={showAd}
                     />
                   </div>
 

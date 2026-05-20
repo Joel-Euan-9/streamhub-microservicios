@@ -21,8 +21,11 @@ async function getFavoritos() {
     
     const data = await res.json();
     
+    // Filtrar registros que no tengan una película válida en catálogo
+    const dataValida = Array.isArray(data) ? data.filter((item: any) => item && item.pelicula) : [];
+    
     // Map the backend data to match the FavoritoItem interface expected by FavoritosGrid
-    return data.map((item: any) => ({
+    return dataValida.map((item: any) => ({
       id: item.peliculaId,
       title: item.pelicula?.titulo || 'Película Desconocida',
       img: item.pelicula?.rutaCaratula || 'https://via.placeholder.com/400x600?text=No+Image',
@@ -40,7 +43,10 @@ export default async function MiActividadPage() {
   const favoritosReales = await getFavoritos();
   const rawHistorial = await getHistorialAction();
   
-  const historialFormateado = rawHistorial.map((item: any) => {
+  const rawHistorialArray = Array.isArray(rawHistorial) ? rawHistorial : [];
+  const historialValido = rawHistorialArray.filter((item: any) => item && item.pelicula);
+
+  const historialFormateado = historialValido.map((item: any) => {
     const pelicula = item.pelicula || {};
     let progress = 0;
     

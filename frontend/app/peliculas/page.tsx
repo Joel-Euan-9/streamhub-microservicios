@@ -1,6 +1,7 @@
 import Navbar from "../components/ui/Navbar";
-import Link from "next/link"; // 1. Importamos Link de Next.js
+import Link from "next/link";
 import { fetchWithAuth } from "@/lib/api";
+import { Star } from "lucide-react";
 
 // 1. Definimos las interfaces de lo que nos devuelve el Gateway
 interface Genero {
@@ -19,20 +20,18 @@ interface Pelicula {
   rutaImagenFondo: string;
   rutaTrailer: string;
   generos?: Genero[]; // Opcional por si alguna peli no tiene género aún
+  requierePremium?: boolean; // Campo que indica si es premium
 }
 
 // 2. Función para obtener los datos desde TU GATEWAY
 async function getPeliculas(): Promise<Pelicula[]> {
   try {
-    // 1. fetchWithAuth ya maneja el Token y el Redirect al login si falla
     const res = await fetchWithAuth("http://gateway-service:8000/api/peliculas");
 
-    // 2. Si el gateway respondió pero con un error (ej. 500)
     if (!res.ok) return [];
 
     return res.json();
   } catch (error) {
-    // 3. Esto solo se ejecuta si el Gateway no responde (está caído)
     console.error("Error de conexión con el Gateway:", error);
     return [];
   }
@@ -76,22 +75,35 @@ export default async function PeliculasPage() {
               {/* Grid de Películas de esa letra */}
               <div className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-6">
                 {peliculasAgrupadas[letra].map((movie) => (
-                  // 2. AQUI ESTÁ LA MAGIA: Cambiamos <div> por <Link> y añadimos el href dinámico
                   <Link 
                     href={`/peliculas/${movie.id}`} 
                     key={movie.id} 
                     className="group cursor-pointer block"
                   >
-                    <div className="relative aspect-[2/3] overflow-hidden rounded-xl bg-gray-800">
+                    <div className="relative aspect-[2/3] overflow-hidden rounded-xl bg-gray-800 shadow-[0_5px_15px_rgba(0,0,0,0.3)]">
                       <img
                         src={movie.rutaCaratula}
                         alt={movie.titulo}
                         className="h-full w-full object-cover transition duration-300 group-hover:scale-110"
                       />
+                      
+                      {/* Etiqueta Premium si requiere suscripción */}
+                      {movie.requierePremium && (
+                        <div className="absolute right-2 top-2 z-10 flex items-center gap-1 rounded-full bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-400 px-2.5 py-1 text-[9px] font-black uppercase tracking-wider text-black shadow-[0_4px_10px_rgba(245,158,11,0.55)] border border-amber-300/30">
+                          <Star size={9} fill="currentColor" className="text-black" />
+                          Premium
+                        </div>
+                      )}
+
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 transition group-hover:opacity-100">
+                        <button className="translate-y-5 rounded-full bg-[#3a86ff] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_0_15px_rgba(58,134,255,0.45)] transition group-hover:translate-y-0">
+                          ▶ Reproducir
+                        </button>
+                      </div>
                     </div>
 
                     <div className="pt-3">
-                      <h3 className="font-semibold text-lg line-clamp-1">{movie.titulo}</h3>
+                      <h3 className="font-semibold text-lg line-clamp-1 group-hover:text-[#3a86ff] transition-colors">{movie.titulo}</h3>
                       <p className="text-sm text-[#aeb4c0] line-clamp-1">
                         {new Date(movie.fechaLanzamiento).getFullYear()} 
                         {movie.generos && movie.generos.length > 0 
