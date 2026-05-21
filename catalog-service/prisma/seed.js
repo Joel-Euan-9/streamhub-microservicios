@@ -33,7 +33,7 @@ async function main() {
 
   // --- 3. CREAR PELÍCULAS ORIGINALES DE LA PLATAFORMA ---
   console.log('   🎬 Creando las 10 películas originales...');
-  
+
   await prisma.pelicula.create({
     data: {
       titulo: 'Coco',
@@ -75,7 +75,7 @@ async function main() {
       fechaLanzamiento: new Date('2012-06-15'),
       duracion: 124,
       rutaCaratula: 'https://www.themoviedb.org/t/p/w600_and_h900_face/5oYpDom6T7c1YiL2j5IImKklws7.jpg',
-      rutaVideo: 'prometeo.mp4', 
+      rutaVideo: 'prometeo.mp4',
       rutaImagenFondo: 'https://media.revistagq.com/photos/62a9b84f95ef49f9257c92c1/16:9/w_2560%2Cc_limit/Prometheus-sci-fi-movie_2880x1800.jpg',
       rutaTrailer: 'https://youtu.be/MldbTQFVE6c',
       requierePremium: true, // ¡PREMIUM!
@@ -92,7 +92,7 @@ async function main() {
       fechaLanzamiento: new Date('2018-07-13'),
       duracion: 90,
       rutaCaratula: 'https://www.themoviedb.org/t/p/w600_and_h900_face/r69lcBWIqjN1wU0sKuxyubbtyF.jpg',
-      rutaVideo: 'hotel-transilvania-3.mp4', 
+      rutaVideo: 'hotel-transilvania-3.mp4',
       rutaImagenFondo: 'https://i.blogs.es/0473f4/transilvania-hotel-3-cartel/1366_2000.jpg',
       rutaTrailer: 'https://youtu.be/9c44MV4vw9c',
       requierePremium: false,
@@ -109,7 +109,7 @@ async function main() {
       fechaLanzamiento: new Date('2017-12-21'),
       duracion: 118,
       rutaCaratula: 'https://www.themoviedb.org/t/p/w1280/1uQaSgtHyTN3r2fecL0mSs6geQO.jpg',
-      rutaVideo: 'jumanji.mp4', 
+      rutaVideo: 'jumanji.mp4',
       rutaImagenFondo: 'https://occ-0-8407-2219.1.nflxso.net/dnm/api/v6/6AYY37jfdO6hpXcMjf9Yu5cnmO0/AAAABfScdYEnEI_xFBPhl_YUFwv3Frs-IHIL77zy0gWoVd0kwmUG5-NOxGBys2RkIo_SLXudQT02T4GmvQU3LbnvhePVFYHNq1VDwoWu.jpg?r=1fe',
       rutaTrailer: 'https://youtu.be/leIrosWRbYQ',
       requierePremium: false,
@@ -126,7 +126,7 @@ async function main() {
       fechaLanzamiento: new Date('2016-09-23'),
       duracion: 89,
       rutaCaratula: 'https://www.themoviedb.org/t/p/w1280/eEyLLrcUAvmAn6OoZwEvzCUG6Z6.jpg',
-      rutaVideo: 'ciguenias.mp4', 
+      rutaVideo: 'ciguenias.mp4',
       rutaImagenFondo: 'https://beam-images.warnermediacdn.com/BEAM_LWM_DELIVERABLES/a8b36b0b-5644-4179-84a7-cce257ff8205/13c58693244ae002cf2a4c302eab3e27464e9afd.jpg?host=wbd-images.prod-vod.h264.io&partner=beamcom',
       rutaTrailer: 'https://youtu.be/_2DO65R2Kds',
       requierePremium: true, // ¡PREMIUM!
@@ -143,7 +143,7 @@ async function main() {
       fechaLanzamiento: new Date('2019-10-18'),
       duracion: 119,
       rutaCaratula: 'https://www.themoviedb.org/t/p/w1280/eZOkXqHXWCKytd78TggAtJ0M3gU.jpg',
-      rutaVideo: 'malefica-maestra-del-mal.mp4', 
+      rutaVideo: 'malefica-maestra-del-mal.mp4',
       rutaImagenFondo: 'https://sm.ign.com/t/ign_es/screenshot/default/blob_3q2v.1280.jpg',
       rutaTrailer: 'https://youtu.be/KyoDGNYUimM',
       requierePremium: true, // ¡PREMIUM!
@@ -160,7 +160,7 @@ async function main() {
       fechaLanzamiento: new Date('2016-09-30'),
       duracion: 127,
       rutaCaratula: 'https://www.themoviedb.org/t/p/w1280/b4585PS4VZEqvwvVZiqeYZkpxhC.jpg',
-      rutaVideo: 'miss-pregrine-y-los-ninios-peculiares.mp4', 
+      rutaVideo: 'miss-pregrine-y-los-ninios-peculiares.mp4',
       rutaImagenFondo: 'https://m.media-amazon.com/images/S/pv-target-images/0a8d2e7dcb0d71d5a71829e5f453c5fc66870bd06900894216e475938e04ca5b.jpg',
       rutaTrailer: 'https://youtu.be/6WgCZWiCkOg',
       requierePremium: true, // ¡PREMIUM!
@@ -177,7 +177,7 @@ async function main() {
       fechaLanzamiento: new Date('2017-07-27'),
       duracion: 140,
       rutaCaratula: 'https://m.media-amazon.com/images/M/MV5BZDFiNTc4ZDktOTI5YS00NGI0LWJlZjYtNzFhMDgxZWNmMjQyXkEyXkFqcGc@._V1_FMjpg_UX1000_.jpg',
-      rutaVideo: 'el-planeta-de-los-simios-la-guerra.mp4', 
+      rutaVideo: 'el-planeta-de-los-simios-la-guerra.mp4',
       rutaImagenFondo: 'https://m.media-amazon.com/images/S/pv-target-images/354a24e271f93a2287ac6a36518d86f98475752af42f18b4ffad1dabdee2775c.jpg',
       rutaTrailer: 'https://youtu.be/3d3rAJ8R0Fg',
       requierePremium: true, // ¡PREMIUM!
@@ -194,7 +194,7 @@ async function main() {
       fechaLanzamiento: new Date('2014-01-10'),
       duracion: 180,
       rutaCaratula: 'https://www.themoviedb.org/t/p/w1280/uthRoUeTtiep5HCoySlOjQSPCbJ.jpg',
-      rutaVideo: 'el-lobo-de-wall-street.mp4', 
+      rutaVideo: 'el-lobo-de-wall-street.mp4',
       rutaImagenFondo: 'https://media.revistagq.com/photos/5f5f50fa09c89c3fca562703/16:9/w_2560%2Cc_limit/leonardo-dicaprio-el-lobo-de-wall-street.jpg',
       rutaTrailer: 'https://youtu.be/DEMZSa0esCU',
       requierePremium: true, // ¡PREMIUM!
@@ -207,8 +207,8 @@ async function main() {
   // --- 4. CREAR PELÍCULAS DE TERCEROS (STUDIO) ---
   console.log('   📹 Creando películas independientes de usuarios Studio...');
 
-  const ID_JOEL = '5397aa51-e23e-449e-972f-d69853e0cfbf';
-  const ID_JULIO = '5ef5470e-7fce-439a-a2f5-43af320dd6d2';
+  const ID_JOEL = 'b274e4fe-64fb-4021-a076-e1a820f5c569';
+  const ID_JULIO = 'a6fc9406-6c13-44ca-801d-8e429c1d19df';
 
   // Película 1 de Joel
   await prisma.pelicula.create({
@@ -239,7 +239,7 @@ async function main() {
       rutaCaratula: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&q=80&w=600&h=900',
       rutaVideo: 'codigo-y-cafe.mp4',
       rutaImagenFondo: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&q=80&w=1920&h=1080',
-      rutaTrailer: 'https://youtu.be/mKWJqP8KEMg', 
+      rutaTrailer: 'https://youtu.be/mKWJqP8KEMg',
       requierePremium: false,
       tipoContenido: 'TERCEROS',
       creadorId: ID_JOEL,

@@ -21,26 +21,112 @@ app.get('/', (req, res) => {
 // Obtener comentarios de una película específica
 app.get('/comentarios/:peliculaId', async (req, res) => {
   try {
-    const comentarios = await prisma.comentario.findMany({
+    // 1. Obtener todos los comentarios de la película (de más viejos a más nuevos para ordenar respuestas cronológicamente)
+    const todosComentarios = await prisma.comentario.findMany({
       where: { peliculaId: req.params.peliculaId },
-      orderBy: { fecha: 'desc' }
+      orderBy: { fecha: 'asc' }
     });
-    res.json(comentarios);
+
+    if (todosComentarios.length === 0) {
+      return res.json([]);
+    }
+
+    // 2. Extraer IDs únicos de usuario
+    const usuarioIds = [...new Set(todosComentarios.map(c => c.usuarioId))];
+
+    // 3. Consultar los perfiles en bloque (batch) a users-service
+    let perfilesMap = {};
+    try {
+      const USERS_URL = process.env.USERS_SERVICE_URL || 'http://users-service:8000';
+      const response = await axios.post(`${USERS_URL}/profile/batch`, { ids: usuarioIds });
+      if (response.data && Array.isArray(response.data)) {
+        response.data.forEach(u => {
+          perfilesMap[u.id] = u;
+        });
+      }
+    } catch (err) {
+      console.error("Error al consultar perfiles en lote desde interactions-service:", err.message);
+    }
+
+    // 4. Hidratar los comentarios con los datos de usuario
+    const comentariosHidratados = todosComentarios.map(c => ({
+      ...c,
+      usuario: perfilesMap[c.usuarioId] || { name: "Usuario de StreamHub", email: "", plan: "BASIC" }
+    }));
+
+    // 5. Agrupar comentarios principales y sus respuestas
+    const comentariosPrincipales = comentariosHidratados.filter(c => !c.parentId);
+    const respuestas = comentariosHidratados.filter(c => c.parentId);
+
+    const tree = comentariosPrincipales.map(principal => {
+      return {
+        ...principal,
+        respuestas: respuestas.filter(r => r.parentId === principal.id)
+      };
+    });
+
+    // Ordenar los comentarios principales por fecha descendente (más nuevos arriba)
+    tree.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+
+    res.json(tree);
   } catch (error) {
+    console.error("Error al obtener comentarios:", error);
     res.status(500).json({ error: "Error al obtener comentarios" });
   }
 });
 
 // Crear un nuevo comentario
 app.post('/comentarios', async (req, res) => {
-  const { usuarioId, peliculaId, contenido } = req.body;
+  const { usuarioId, peliculaId, contenido, parentId } = req.body;
+  if (!contenido || contenido.trim() === "") {
+    return res.status(400).json({ error: "El contenido del comentario no puede estar vacío" });
+  }
   try {
     const nuevoComentario = await prisma.comentario.create({
-      data: { usuarioId, peliculaId, contenido }
+      data: { 
+        usuarioId, 
+        peliculaId, 
+        contenido,
+        parentId: parentId || null
+      }
     });
     res.json(nuevoComentario);
   } catch (error) {
+    console.error("Error al crear comentario:", error);
     res.status(500).json({ error: "Error al crear el comentario" });
+  }
+});
+
+// Obtener cantidades de comentarios en lote
+app.post('/comentarios/count-batch', async (req, res) => {
+  try {
+    const { peliculaIds } = req.body;
+    if (!peliculaIds || !Array.isArray(peliculaIds)) {
+      return res.status(400).json({ error: "peliculaIds debe ser un arreglo" });
+    }
+
+    const counts = await prisma.comentario.groupBy({
+      by: ['peliculaId'],
+      where: {
+        peliculaId: { in: peliculaIds }
+      },
+      _count: {
+        id: true
+      }
+    });
+
+    const countsMap = {};
+    peliculaIds.forEach(id => {
+      countsMap[id] = 0;
+    });
+    counts.forEach(c => {
+      countsMap[c.peliculaId] = c._count.id;
+    });
+
+    res.json(countsMap);
+  } catch (error) {
+    console.error("Error en count-batch de comentarios:", error);
+    res.status(500).json({ error: "Error interno al calcular conteo de comentarios" });
   }
 });
 

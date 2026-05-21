@@ -3,6 +3,7 @@ import MovieHero from '@/app/components/peliculavista/MovieHero';
 import MoviePlayer from '@/app/components/peliculavista/MoviePlayer';
 import PaywallBlock from '@/app/components/peliculavista/PaywallBlock';
 import DailyLimitPaywall from '@/app/components/peliculavista/DailyLimitPaywall';
+import MovieComments from '@/app/components/peliculavista/MovieComments';
 import { notFound } from 'next/navigation';
 import { fetchWithAuth } from '@/lib/api';
 import { getProgressAction } from '@/app/actions/historial';
@@ -97,6 +98,9 @@ export default async function PeliculaDetailPage({ params }: Props) {
             />
           )}
         </div>
+
+        {/* Panel de Comentarios Estilo YouTube */}
+        <MovieComments peliculaId={id} currentUserPlan={userPlan} movieCreatorId={movie.creadorId} />
 
         {/* Aquí podrías añadir secciones extra como "Películas Similares" más adelante */}
       </main>

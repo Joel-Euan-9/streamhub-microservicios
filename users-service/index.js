@@ -7,6 +7,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
+const axios = require('axios');
 
 app.use(express.json());
 app.use(cookieParser());
@@ -19,13 +20,74 @@ app.use(cors({
 app.post('/historial', async (req, res) => {
   const { usuarioId, peliculaId, minuto, completada } = req.body;
 
-  const visualizacion = await prisma.visualizacion.upsert({
-    where: { usuarioId_peliculaId: { usuarioId, peliculaId } },
-    update: { minutoPausa: minuto, completada, ultimaVezVisto: new Date() },
-    create: { usuarioId, peliculaId, minutoPausa: minuto, completada }
-  });
+  try {
+    // 1. Verificar si ya existe el registro de visualización
+    const existente = await prisma.visualizacion.findUnique({
+      where: { usuarioId_peliculaId: { usuarioId, peliculaId } }
+    });
 
-  res.json(visualizacion);
+    let markMonetizada = false;
+
+    // Si el espectador ha visto 60 segundos o más y aún no ha sido monetizado
+    if (minuto >= 60 && (!existente || !existente.monetizada)) {
+      markMonetizada = true;
+      
+      try {
+        // Obtener detalles de la película desde el catalog-service
+        const catResp = await axios.get(`http://catalog-service:8000/peliculas/${peliculaId}`);
+        const movie = catResp.data;
+
+        // Si la película tiene un creador y no es el propio espectador que la está viendo
+        if (movie && movie.creadorId && movie.creadorId !== usuarioId) {
+          // Verificar que el creador exista y sea plan STUDIO
+          const creador = await prisma.user.findUnique({
+            where: { id: movie.creadorId }
+          });
+
+          if (creador && creador.plan === 'STUDIO') {
+            // Acreditar comisión e insertar registro de transacción
+            await prisma.$transaction([
+              prisma.user.update({
+                where: { id: movie.creadorId },
+                data: { saldoBilletera: { increment: 10.0 } }
+              }),
+              prisma.transaccion.create({
+                data: {
+                  usuarioId: movie.creadorId,
+                  monto: 10.0,
+                  descripcion: `Comisión por visualización de la película "${movie.titulo}"`
+                }
+              })
+            ]);
+          }
+        }
+      } catch (err) {
+        console.error("Error al acreditar comisión por visualización:", err.message);
+      }
+    }
+
+    const visualizacion = await prisma.visualizacion.upsert({
+      where: { usuarioId_peliculaId: { usuarioId, peliculaId } },
+      update: { 
+        minutoPausa: minuto, 
+        completada, 
+        monetizada: existente?.monetizada || markMonetizada,
+        ultimaVezVisto: new Date() 
+      },
+      create: { 
+        usuarioId, 
+        peliculaId, 
+        minutoPausa: minuto, 
+        completada,
+        monetizada: markMonetizada
+      }
+    });
+
+    res.json(visualizacion);
+  } catch (error) {
+    console.error("Error en POST /historial:", error);
+    res.status(500).json({ error: "Error al actualizar progreso" });
+  }
 });
 
 // Obtener historial de un usuario (Solo devuelve IDs y minutos)
@@ -281,6 +343,7 @@ app.get('/profile/:id', async (req, res) => {
         email: true,
         name: true,
         plan: true,
+        saldoBilletera: true,
         createdAt: true,
       }
     });
@@ -288,6 +351,33 @@ app.get('/profile/:id', async (req, res) => {
     res.json(user);
   } catch (error) {
     res.status(500).json({ error: "Error al obtener perfil" });
+  }
+});
+
+// Obtener perfil en lote (Batch Query)
+app.post('/profile/batch', async (req, res) => {
+  const { ids } = req.body;
+  if (!ids || !Array.isArray(ids)) {
+    return res.status(400).json({ error: "Se requiere un arreglo 'ids'" });
+  }
+
+  try {
+    const users = await prisma.user.findMany({
+      where: {
+        id: { in: ids }
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        plan: true
+      }
+    });
+
+    res.json(users);
+  } catch (error) {
+    console.error("Error en batch profile query:", error);
+    res.status(500).json({ error: "Error al obtener perfiles" });
   }
 });
 
@@ -513,6 +603,85 @@ app.post('/favoritos/toggle', async (req, res) => {
   } catch (error) {
     console.error("Error toggle favorito:", error);
     res.status(500).json({ error: "Error alternando favorito", detalle: error.message });
+  }
+});
+
+// Obtener IDs de creadores con plan STUDIO activo
+app.get('/usuarios/studio-ids', async (req, res) => {
+  try {
+    const creators = await prisma.user.findMany({
+      where: { plan: 'STUDIO' },
+      select: { id: true }
+    });
+    const ids = creators.map(c => c.id);
+    res.json(ids);
+  } catch (error) {
+    console.error("Error al obtener creadores STUDIO:", error);
+    res.status(500).json({ error: "Error al obtener creadores STUDIO" });
+  }
+});
+
+// Obtener historial de transacciones de un usuario creador
+app.get('/usuarios/:id/transacciones', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const transacciones = await prisma.transaccion.findMany({
+      where: { usuarioId: id },
+      orderBy: { fecha: 'desc' }
+    });
+    res.json(transacciones);
+  } catch (error) {
+    console.error("Error al obtener transacciones:", error);
+    res.status(500).json({ error: "Error al obtener transacciones" });
+  }
+});
+
+// Solicitar retiro simulado (mínimo $500)
+app.post('/usuarios/:id/retirar', async (req, res) => {
+  const { id } = req.params;
+  const { monto } = req.body;
+
+  if (!monto || monto <= 0) {
+    return res.status(400).json({ error: "Monto de retiro inválido." });
+  }
+
+  try {
+    const user = await prisma.user.findUnique({ where: { id } });
+    if (!user) {
+      return res.status(404).json({ error: "Usuario no encontrado." });
+    }
+
+    if (user.plan !== 'STUDIO') {
+      return res.status(403).json({ error: "Solo los creadores en plan STUDIO pueden retirar fondos." });
+    }
+
+    if (user.saldoBilletera < 500) {
+      return res.status(400).json({ error: "El monto mínimo de retiro es de $500.00 MXN." });
+    }
+
+    if (user.saldoBilletera < monto) {
+      return res.status(400).json({ error: "Saldo insuficiente para retirar este monto." });
+    }
+
+    // Restar de la billetera e insertar registro de transacción de retiro (negativa)
+    const resultado = await prisma.$transaction([
+      prisma.user.update({
+        where: { id },
+        data: { saldoBilletera: { decrement: monto } }
+      }),
+      prisma.transaccion.create({
+        data: {
+          usuarioId: id,
+          monto: -monto,
+          descripcion: "Retiro de fondos transferido a cuenta bancaria (Simulado)"
+        }
+      })
+    ]);
+
+    res.json({ success: true, saldoBilletera: resultado[0].saldoBilletera });
+  } catch (error) {
+    console.error("Error al procesar retiro:", error);
+    res.status(500).json({ error: "Error interno al procesar el retiro de fondos." });
   }
 });
 

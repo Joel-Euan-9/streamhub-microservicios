@@ -66,7 +66,7 @@ const STREAM_URL = process.env.STREAM_URL || 'http://streamhub.local/media/';
  */
 app.get('/api/peliculas', async (req, res) => {
   try {
-    const resp = await axios.get(`${CATALOG_URL}/peliculas`);
+    const resp = await axios.get(`${CATALOG_URL}/peliculas`, { params: req.query });
     res.json(resp.data);
   } catch (error) {
     res.status(500).json({ error: "Error conectando con el catálogo" });
@@ -420,10 +420,27 @@ app.get('/api/interacciones/comentarios/:peliculaId', authMiddleware, async (req
  */
 app.post('/api/interacciones/comentarios', authMiddleware, async (req, res) => {
   try {
-    const resp = await axios.post(`${INTERACTIONS_URL}/comentarios`, req.body);
+    const { peliculaId, contenido, parentId } = req.body;
+    const resp = await axios.post(`${INTERACTIONS_URL}/comentarios`, {
+      usuarioId: req.user.userId,
+      peliculaId,
+      contenido,
+      parentId
+    });
     res.json(resp.data);
   } catch (error) {
     res.status(500).json({ error: "Error al crear el comentario" });
+  }
+});
+
+// Proxy para obtener el conteo de comentarios por lote
+app.post('/api/interacciones/comentarios/count-batch', authMiddleware, async (req, res) => {
+  try {
+    const resp = await axios.post(`${INTERACTIONS_URL}/comentarios/count-batch`, req.body);
+    res.json(resp.data);
+  } catch (error) {
+    console.error("Error en /api/interacciones/comentarios/count-batch:", error.message);
+    res.status(500).json({ error: "Error al calcular el lote de comentarios" });
   }
 });
 
@@ -670,6 +687,49 @@ app.post('/api/favoritos/toggle', authMiddleware, async (req, res) => {
     res.json(resp.data);
   } catch (error) {
     res.status(500).json({ error: "Error al alternar favorito" });
+  }
+});
+
+/**
+ * @swagger
+ * /api/perfil/transacciones:
+ *   get:
+ *     summary: Obtiene el historial de transacciones del creador en sesión
+ *     tags:
+ *       - Perfil
+ */
+app.get('/api/perfil/transacciones', authMiddleware, async (req, res) => {
+  try {
+    const resp = await axios.get(`${USERS_URL}/usuarios/${req.user.userId}/transacciones`);
+    res.json(resp.data);
+  } catch (error) {
+    console.error("Error al obtener transacciones en gateway:", error.message);
+    res.status(500).json({ error: "Error al obtener historial de transacciones" });
+  }
+});
+
+/**
+ * @swagger
+ * /api/perfil/retirar:
+ *   post:
+ *     summary: Procesa una solicitud de retiro simulado para el creador en sesión
+ *     tags:
+ *       - Perfil
+ */
+app.post('/api/perfil/retirar', authMiddleware, async (req, res) => {
+  try {
+    const { monto } = req.body;
+    const resp = await axios.post(`${USERS_URL}/usuarios/${req.user.userId}/retirar`, { monto });
+    res.json(resp.data);
+  } catch (error) {
+    if (error.response && error.response.status === 400) {
+      return res.status(400).json({ error: error.response.data.error });
+    }
+    if (error.response && error.response.status === 403) {
+      return res.status(403).json({ error: error.response.data.error });
+    }
+    console.error("Error al retirar fondos en gateway:", error.message);
+    res.status(500).json({ error: "Error al procesar el retiro de fondos" });
   }
 });
 

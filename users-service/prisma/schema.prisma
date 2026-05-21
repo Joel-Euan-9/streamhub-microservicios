@@ -69,6 +69,7 @@ model Visualizacion {
   peliculaId     String   @map("pelicula_id") @db.Uuid
   minutoPausa    Int      @default(0) @map("minuto_pausa")
   completada     Boolean  @default(false)
+  monetizada     Boolean  @default(false) @map("monetizada")
   ultimaVezVisto DateTime @updatedAt @map("ultima_vez_visto")
 
   usuario        User     @relation(fields: [usuarioId], references: [id])

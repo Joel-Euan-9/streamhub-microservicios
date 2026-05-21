@@ -1,20 +1,74 @@
 const express = require('express');
 const { PrismaClient } = require('@prisma/client');
+const axios = require('axios');
 const app = express();
 const prisma = new PrismaClient();
 
 app.use(express.json());
 
+// Caché en memoria para los creadores STUDIO activos
+let cacheStudioIds = null;
+let cacheTimestamp = 0;
+
+const getActiveStudioIds = async () => {
+  const now = Date.now();
+  // Caché de 5 segundos para alto rendimiento
+  if (cacheStudioIds && (now - cacheTimestamp < 5000)) {
+    return cacheStudioIds;
+  }
+  try {
+    const resp = await axios.get('http://users-service:8000/usuarios/studio-ids');
+    cacheStudioIds = resp.data;
+    cacheTimestamp = now;
+    return cacheStudioIds;
+  } catch (error) {
+    console.error("Error al obtener creadores STUDIO en el catálogo:", error.message);
+    return cacheStudioIds || []; // Si falla, reusamos el último caché o vacío
+  }
+};
+
 // 1. RUTAS ESTÁTICAS (Nombres fijos) - SIEMPRE ARRIBA
 app.get('/peliculas', async (req, res) => {
-  const peliculas = await prisma.pelicula.findMany({ include: { generos: true } });
-  res.json(peliculas);
+  const { creadorId } = req.query;
+  let where = {};
+  
+  if (creadorId) {
+    // Si se consulta un creador específico (ej: panel Studio administrativo), no filtramos visibilidad
+    where = { creadorId };
+  } else {
+    // Catálogo público: Ocultar películas de creadores que no tengan plan STUDIO activo
+    const activeStudioIds = await getActiveStudioIds();
+    where = {
+      OR: [
+        { creadorId: null },
+        { creadorId: { in: activeStudioIds } }
+      ]
+    };
+  }
+
+  try {
+    const peliculas = await prisma.pelicula.findMany({ 
+      where,
+      include: { generos: true } 
+    });
+    res.json(peliculas);
+  } catch (error) {
+    console.error("Error al obtener películas:", error);
+    res.status(500).json({ error: "Error al obtener películas" });
+  }
 });
 
-// Agregamos estrenos aquí, arriba de los parámetros dinámicos
+// Estrenos con filtro de creadores activos
 app.get('/peliculas/estrenos', async (req, res) => {
   try {
+    const activeStudioIds = await getActiveStudioIds();
     const estrenos = await prisma.pelicula.findMany({
+      where: {
+        OR: [
+          { creadorId: null },
+          { creadorId: { in: activeStudioIds } }
+        ]
+      },
       orderBy: { 
         fechaLanzamiento: 'desc' 
       },
@@ -30,9 +84,17 @@ app.get('/peliculas/estrenos', async (req, res) => {
   }
 });
 
+// Top 10 películas más vistas con filtro de creadores activos
 app.get('/peliculas/top', async (req, res) => {
   try {
+    const activeStudioIds = await getActiveStudioIds();
     const topPeliculas = await prisma.pelicula.findMany({
+      where: {
+        OR: [
+          { creadorId: null },
+          { creadorId: { in: activeStudioIds } }
+        ]
+      },
       orderBy: { 
         vistasTotales: 'desc' 
       },
@@ -51,11 +113,23 @@ app.get('/peliculas/top', async (req, res) => {
 // 2. RUTAS DE ACCIÓN (POST)
 app.post('/peliculas/batch', async (req, res) => {
   const { ids } = req.body;
-  const peliculas = await prisma.pelicula.findMany({
-    where: { id: { in: ids } },
-    include: { generos: true }
-  });
-  res.json(peliculas);
+  try {
+    const activeStudioIds = await getActiveStudioIds();
+    const peliculas = await prisma.pelicula.findMany({
+      where: { 
+        id: { in: ids },
+        OR: [
+          { creadorId: null },
+          { creadorId: { in: activeStudioIds } }
+        ]
+      },
+      include: { generos: true }
+    });
+    res.json(peliculas);
+  } catch (error) {
+    console.error("Error en batch películas:", error);
+    res.status(500).json({ error: "Error en batch películas" });
+  }
 });
 
 // 3. RUTAS DINÁMICAS (Parámetros con :) - SIEMPRE AL FINAL
@@ -65,6 +139,22 @@ app.get('/peliculas/:id', async (req, res) => {
       where: { id: req.params.id },
       include: { generos: true }
     });
+    
+    if (!pelicula) {
+      return res.status(404).json({ error: "Película no encontrada" });
+    }
+
+    // Si tiene un creador y no está en la lista de creadores STUDIO activos
+    if (pelicula.creadorId) {
+      const activeStudioIds = await getActiveStudioIds();
+      if (!activeStudioIds.includes(pelicula.creadorId)) {
+        return res.status(403).json({ 
+          error: "content_suspended", 
+          message: "Este contenido no se encuentra disponible temporalmente porque el creador no cuenta con una suscripción activa." 
+        });
+      }
+    }
+
     res.json(pelicula);
   } catch (error) {
     res.status(400).json({ error: "ID no válido o no encontrado" });
@@ -84,7 +174,6 @@ app.patch('/peliculas/:id/estadisticas', async (req, res) => {
       data: dataUpdate
     });
     
-    // Devolvemos el creadorId para que el servicio que llamó sepa a quién pagarle
     res.json({ creadorId: peliculaActualizada.creadorId, tipoContenido: peliculaActualizada.tipoContenido });
   } catch (error) {
     res.status(500).json({ error: "Error al actualizar estadísticas" });

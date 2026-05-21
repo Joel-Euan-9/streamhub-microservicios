@@ -17,6 +17,7 @@ model Comentario {
   peliculaId String   @map("pelicula_id") @db.Uuid
   contenido  String   @db.Text
   fecha      DateTime @default(now())
+  parentId   String?  @map("parent_id")
 
   @@map("comentarios")
 }
