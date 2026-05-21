@@ -207,8 +207,8 @@ async function main() {
   // --- 4. CREAR PELÍCULAS DE TERCEROS (STUDIO) ---
   console.log('   📹 Creando películas independientes de usuarios Studio...');
 
-  const ID_JOEL = 'b274e4fe-64fb-4021-a076-e1a820f5c569';
-  const ID_JULIO = 'a6fc9406-6c13-44ca-801d-8e429c1d19df';
+  const ID_JOEL = '3b3ae30b-76e0-4e74-9b14-b962fa43d1e2';
+  const ID_JULIO = '76ca7bdd-0182-41f0-8fe9-13594ae4f64c';
 
   // Película 1 de Joel
   await prisma.pelicula.create({
