@@ -130,28 +130,84 @@ app.post('/comentarios/count-batch', async (req, res) => {
   }
 });
 
-// Registrar un Like o Dislike
+// Registrar, cambiar o quitar un Like o Dislike
 app.post('/interaccion', async (req, res) => {
   const { usuarioId, peliculaId, tipo } = req.body; 
   try {
-    // 1. Guardamos la interacción localmente para que no vote dos veces
-    const nuevaInteraccion = await prisma.interaccion.create({
-      data: { usuarioId, peliculaId, tipo }
+    // Buscar si ya existe una interacción
+    const interaccionExistente = await prisma.interaccion.findUnique({
+      where: {
+        usuarioId_peliculaId: { usuarioId, peliculaId }
+      }
     });
-    
-    // 2. Le avisamos al Catálogo que sume 1 a las estadísticas (Likes/Dislikes)
-    await axios.patch(`${CATALOG_URL}/peliculas/${peliculaId}/estadisticas`, {
-      tipo: tipo
-    });
-    
-    // Devolvemos el registro exitoso sin pagar comisiones
-    res.json(nuevaInteraccion);
-  } catch (error) {
-    if (error.code === 'P2002') {
-      return res.status(400).json({ error: "Este usuario ya interactuó con esta película" });
+
+    let likesDiff = 0;
+    let dislikesDiff = 0;
+    let nuevaInteraccion = null;
+    let accion = ""; // "CREADO", "ACTUALIZADO", "ELIMINADO"
+
+    if (interaccionExistente) {
+      if (interaccionExistente.tipo === tipo) {
+        // Si es el mismo tipo, significa que quiere quitar su voto
+        await prisma.interaccion.delete({
+          where: { id: interaccionExistente.id }
+        });
+        accion = "ELIMINADO";
+        if (tipo === 'LIKE') likesDiff = -1;
+        if (tipo === 'DISLIKE') dislikesDiff = -1;
+      } else {
+        // Cambiar de LIKE a DISLIKE o viceversa
+        nuevaInteraccion = await prisma.interaccion.update({
+          where: { id: interaccionExistente.id },
+          data: { tipo }
+        });
+        accion = "ACTUALIZADO";
+        if (tipo === 'LIKE') {
+          likesDiff = 1;
+          dislikesDiff = -1; // Quitamos el dislike anterior
+        } else {
+          dislikesDiff = 1;
+          likesDiff = -1; // Quitamos el like anterior
+        }
+      }
+    } else {
+      // Crear nueva interacción
+      nuevaInteraccion = await prisma.interaccion.create({
+        data: { usuarioId, peliculaId, tipo }
+      });
+      accion = "CREADO";
+      if (tipo === 'LIKE') likesDiff = 1;
+      if (tipo === 'DISLIKE') dislikesDiff = 1;
     }
-    console.error("Error capturado:", error.message);
+    
+    // 2. Le avisamos al Catálogo de las diferencias
+    if (likesDiff !== 0 || dislikesDiff !== 0) {
+      await axios.patch(`${CATALOG_URL}/peliculas/${peliculaId}/estadisticas/diff`, {
+        likesDiff,
+        dislikesDiff
+      });
+    }
+    
+    res.json({ interaccion: nuevaInteraccion, accion, likesDiff, dislikesDiff });
+  } catch (error) {
+    console.error("Error capturado en interaccion:", error.message);
     res.status(500).json({ error: "Error al registrar la interacción" });
+  }
+});
+
+// Obtener estado de interacción del usuario actual para una película
+app.get('/interaccion/status/:peliculaId/:usuarioId', async (req, res) => {
+  try {
+    const { peliculaId, usuarioId } = req.params;
+    const interaccion = await prisma.interaccion.findUnique({
+      where: {
+        usuarioId_peliculaId: { usuarioId, peliculaId }
+      }
+    });
+    res.json({ tipo: interaccion ? interaccion.tipo : null });
+  } catch (error) {
+    console.error("Error al obtener estado de interacción:", error);
+    res.status(500).json({ error: "Error al obtener estado de interacción" });
   }
 });
 

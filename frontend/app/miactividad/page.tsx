@@ -113,8 +113,8 @@ export default async function MiActividadPage() {
                 <span className="text-xs font-semibold text-white">{historialFormateado.length} vistas recientes</span>
               </div>
               <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-4 py-2">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="#ef4444" stroke="#ef4444" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="#fbbf24" stroke="#fbbf24" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/>
                 </svg>
                 <span className="text-xs font-semibold text-white">{favoritosReales.length} favoritos</span>
               </div>
@@ -151,7 +151,7 @@ export default async function MiActividadPage() {
                 <div className="w-1 h-8 rounded-full bg-gradient-to-b from-[#ef4444] to-[#f97316]" />
                 <div>
                   <h2 className="text-xl md:text-2xl font-bold text-white">Mis Favoritos</h2>
-                  <p className="text-xs text-[#aeb4c0] mt-0.5">Toca el ❤️ rojo para quitar una película de tus favoritos</p>
+                  <p className="text-xs text-[#aeb4c0] mt-0.5">Toca el icono 🔖 amarillo para quitar una película de tus favoritos</p>
                 </div>
               </div>
             </div>

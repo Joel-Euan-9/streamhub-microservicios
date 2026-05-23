@@ -96,6 +96,7 @@ export default function Navbar() {
   const isPeliculas = pathname === "/peliculas";
   const isGeneros = pathname === "/generos";
   const isActividad = pathname === "/miactividad";
+  const isCanales = pathname.startsWith("/canales");
 
   return (
     <>
@@ -124,6 +125,7 @@ export default function Navbar() {
           <li><Link href="/peliculas" className={`text-xl font-semibold transition md:text-base ${isPeliculas ? "text-white drop-shadow-[0_0_8px_#3a86ff]" : "text-[#aeb4c0] hover:text-white hover:drop-shadow-[0_0_8px_#3a86ff]"}`}>Películas</Link></li>
           <li><Link href="/generos" className={`text-xl font-semibold transition md:text-base ${isGeneros ? "text-white drop-shadow-[0_0_8px_#3a86ff]" : "text-[#aeb4c0] hover:text-white hover:drop-shadow-[0_0_8px_#3a86ff]"}`}>Géneros</Link></li>
           <li><Link href="/miactividad" className={`text-xl font-semibold transition md:text-base ${isActividad ? "text-white drop-shadow-[0_0_8px_#3a86ff]" : "text-[#aeb4c0] hover:text-white hover:drop-shadow-[0_0_8px_#3a86ff]"}`}>Mi Actividad</Link></li>
+          <li><Link href="/canales" className={`text-xl font-semibold transition md:text-base ${isCanales ? "text-white drop-shadow-[0_0_8px_#3a86ff]" : "text-[#aeb4c0] hover:text-white hover:drop-shadow-[0_0_8px_#3a86ff]"}`}>Canales</Link></li>
         </ul>
       </div>
 

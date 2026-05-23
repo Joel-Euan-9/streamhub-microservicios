@@ -93,21 +93,21 @@ export default function FavoritosGrid({ items }: Props) {
             <button
               onClick={(e) => handleUnfavorite(e, item.id)}
               aria-label="Quitar de favoritos"
-              className="absolute top-2.5 right-2.5 z-10 w-9 h-9 rounded-full bg-[rgba(0,0,0,0.65)] backdrop-blur-sm border border-white/10 flex items-center justify-center transition-all duration-200 hover:scale-110 hover:bg-red-500/20 hover:border-red-500/50 group/heart"
+              className="absolute top-2.5 right-2.5 z-10 w-9 h-9 rounded-full bg-[rgba(0,0,0,0.65)] backdrop-blur-sm border border-white/10 flex items-center justify-center transition-all duration-200 hover:scale-110 hover:bg-amber-400/20 hover:border-amber-400/50 group/heart"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="17"
                 height="17"
                 viewBox="0 0 24 24"
-                fill="#ef4444"
-                stroke="#ef4444"
+                fill="#fbbf24"
+                stroke="#fbbf24"
                 strokeWidth="1.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                className="drop-shadow-[0_0_6px_rgba(239,68,68,0.7)] transition-transform group-hover/heart:scale-125"
+                className="drop-shadow-[0_0_6px_rgba(251,191,36,0.7)] transition-transform group-hover/heart:scale-125"
               >
-                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/>
               </svg>
             </button>
 

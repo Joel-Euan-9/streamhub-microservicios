@@ -17,7 +17,7 @@ export default function IngresosPage() {
   const [saldo, setSaldo] = useState<number>(0);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
-  
+
   const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false);
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [submittingWithdraw, setSubmittingWithdraw] = useState(false);
@@ -112,7 +112,7 @@ export default function IngresosPage() {
 
   return (
     <div className="mx-auto max-w-6xl animate-in fade-in duration-500">
-      
+
       {/* HEADER */}
       <div className="mb-8 mt-2">
         <h1 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
@@ -139,11 +139,11 @@ export default function IngresosPage() {
         <>
           {/* TARJETAS DE SALDO */}
           <div className="mb-10 grid gap-6 md:grid-cols-2">
-            
+
             {/* Tarjeta Principal: Saldo Disponible */}
             <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-[#0b0c15] to-[#121826] p-8 shadow-2xl">
               <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-blue-600/20 blur-[50px]" />
-              
+
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-sm font-medium uppercase tracking-wider text-[#aeb4c0]">Saldo Disponible</p>
@@ -162,18 +162,17 @@ export default function IngresosPage() {
                   <span className="font-bold text-white">{porcentajeRetiro.toFixed(0)}%</span>
                 </div>
                 <div className="h-2 w-full overflow-hidden rounded-full bg-white/5">
-                  <div 
-                    className={`h-full rounded-full transition-all duration-1000 ${
-                      puedeRetirar 
-                        ? 'bg-gradient-to-r from-emerald-500 to-teal-400 shadow-[0_0_10px_rgba(16,185,129,0.3)]' 
+                  <div
+                    className={`h-full rounded-full transition-all duration-1000 ${puedeRetirar
+                        ? 'bg-gradient-to-r from-emerald-500 to-teal-400 shadow-[0_0_10px_rgba(16,185,129,0.3)]'
                         : 'bg-gradient-to-r from-blue-500 to-cyan-400'
-                    }`}
+                      }`}
                     style={{ width: `${porcentajeRetiro}%` }}
                   />
                 </div>
               </div>
 
-              <button 
+              <button
                 disabled={!puedeRetirar}
                 onClick={() => {
                   setWithdrawAmount(saldo.toFixed(2));
@@ -181,28 +180,28 @@ export default function IngresosPage() {
                 }}
                 className="mt-8 flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 px-6 py-3.5 font-bold text-white shadow-[0_0_15px_rgba(59,130,246,0.3)] transition disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed"
               >
-                <ArrowUpRight size={20} /> 
+                <ArrowUpRight size={20} />
                 {puedeRetirar ? "Solicitar Retiro" : "Saldo Insuficiente para Retirar"}
               </button>
             </div>
 
             {/* Tarjeta Secundaria: Ingresos Históricos */}
-            <div className="flex flex-col gap-6">
-              <div className="relative flex-1 overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-8">
+            <div className="flex flex-col gap-6 h-full justify-between">
+              <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-8">
                 <div className="absolute -left-10 -top-10 h-32 w-32 rounded-full bg-emerald-600/10 blur-[40px]" />
                 <p className="text-sm font-medium uppercase tracking-wider text-[#aeb4c0]">Ingresos Totales (Histórico)</p>
                 <h3 className="mt-2 text-4xl font-bold text-white">
                   ${ingresosTotales.toFixed(2)} <span className="text-xs text-gray-500 uppercase tracking-wider font-bold">MXN</span>
                 </h3>
-                <p className="mt-4 text-xs text-[#aeb4c0] leading-relaxed">
+                <p className="mt-4 text-sm text-[#aeb4c0] leading-relaxed">
                   Este es el monto total acumulado de por vida que tus películas han generado desde que te uniste a StreamHub Studio. No se reduce al realizar retiros.
                 </p>
               </div>
-              
-              <div className="flex flex-1 items-center gap-4 rounded-3xl border border-white/10 bg-[#0b0c15] p-6 shadow-lg">
+
+              <div className="flex items-center gap-4 rounded-3xl border border-white/10 bg-[#0b0c15] p-6 shadow-lg">
                 <AlertCircle className="shrink-0 text-blue-500" size={24} />
                 <p className="text-xs text-[#aeb4c0] leading-relaxed">
-                  Las comisiones de **$10.00 MXN** se acreditan automáticamente en el mismo instante en que un espectador califica viendo 1 minuto o más de tus contenidos de terceros.
+                  Las comisiones de <span className="font-bold text-white">$10.00 MXN</span> se acreditan automáticamente en el mismo instante en que un espectador califica viendo 1 minuto o más de tus contenidos de terceros.
                 </p>
               </div>
             </div>
@@ -215,7 +214,7 @@ export default function IngresosPage() {
               <History className="text-[#aeb4c0]" size={20} />
               <h2 className="text-xl font-bold text-white">Historial de Transacciones</h2>
             </div>
-            
+
             <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#0b0c15] shadow-xl">
               <div className="overflow-x-auto custom-scrollbar">
                 {transactions.length === 0 ? (
@@ -275,13 +274,13 @@ export default function IngresosPage() {
           {isWithdrawModalOpen && (
             <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
               <div className="relative w-full max-w-md overflow-hidden rounded-3xl border border-white/10 bg-[#121826] shadow-2xl animate-in zoom-in duration-200">
-                
+
                 <div className="flex items-center justify-between border-b border-white/10 p-6">
                   <h2 className="text-xl font-bold text-white flex items-center gap-2">
                     <Sparkles size={20} className="text-blue-500 animate-pulse" />
                     Solicitar Retiro
                   </h2>
-                  <button 
+                  <button
                     onClick={() => {
                       if (!submittingWithdraw) {
                         setIsWithdrawModalOpen(false);
@@ -295,7 +294,7 @@ export default function IngresosPage() {
                 </div>
 
                 <form onSubmit={handleWithdraw} className="p-6">
-                  
+
                   {withdrawSuccess ? (
                     <div className="py-6 text-center space-y-3">
                       <div className="h-16 w-16 mx-auto flex items-center justify-center rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 animate-bounce">
@@ -321,8 +320,8 @@ export default function IngresosPage() {
                           <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
                             <DollarSign className="text-white/40" size={18} />
                           </div>
-                          <input 
-                            type="number" 
+                          <input
+                            type="number"
                             required
                             step="0.01"
                             min={RETIRO_MINIMO}
@@ -339,7 +338,7 @@ export default function IngresosPage() {
                             <AlertCircle size={12} /> {withdrawError}
                           </p>
                         )}
-                        <button 
+                        <button
                           type="button"
                           onClick={() => setWithdrawAmount(saldo.toString())}
                           className="mt-2 text-xs font-bold text-blue-400 hover:text-blue-300 transition hover:underline"
@@ -356,7 +355,7 @@ export default function IngresosPage() {
                       </div>
 
                       <div className="flex items-center gap-3">
-                        <button 
+                        <button
                           type="button"
                           disabled={submittingWithdraw}
                           onClick={() => {
@@ -367,7 +366,7 @@ export default function IngresosPage() {
                         >
                           Cancelar
                         </button>
-                        <button 
+                        <button
                           type="submit"
                           disabled={submittingWithdraw}
                           className="flex-1 rounded-xl bg-blue-600 hover:bg-blue-700 py-3 font-bold text-white shadow-[0_0_15px_rgba(59,130,246,0.4)] transition disabled:opacity-50 flex items-center justify-center gap-1"

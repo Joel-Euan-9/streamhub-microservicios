@@ -36,12 +36,12 @@ async function getMovieDetails(id: string) {
 }
 
 interface Props {
-  params: { id: string }; // Next.js nos pasa el [id] aquí
+  params: Promise<{ id: string }>; // Next.js nos pasa el [id] aquí
 }
 
 // Marcamos la página como async
 export default async function PeliculaDetailPage({ params }: Props) {
-  const { id } = params;
+  const { id } = await params;
   
   // Hacemos el fetch de datos reales
   const movie = await getMovieDetails(id);

@@ -30,6 +30,7 @@ export default function MoviePlayer({ videoUrl, posterUrl, peliculaId, initialTi
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null); // Referencia para el temporizador
   const initialTimeSetRef = useRef(false);
   const lastSavedTimeRef = useRef(-1);
+  const previousVolumeRef = useRef(1); // Guardar volumen antes de mutear
 
   // Estados estándar del reproductor
   const [isPlaying, setIsPlaying] = useState(false);
@@ -70,7 +71,7 @@ export default function MoviePlayer({ videoUrl, posterUrl, peliculaId, initialTi
     setAdTimeLeft(15);
     setShowAd(true);
     setShowControls(false); // Ocultar controles durante el anuncio
-    
+
     if (videoRef.current) {
       videoRef.current.pause();
       setIsPlaying(false);
@@ -130,7 +131,7 @@ export default function MoviePlayer({ videoUrl, posterUrl, peliculaId, initialTi
 
       // Ignorar la tecla si el usuario está escribiendo en un input o textarea
       if (
-        document.activeElement?.tagName === 'INPUT' || 
+        document.activeElement?.tagName === 'INPUT' ||
         document.activeElement?.tagName === 'TEXTAREA'
       ) {
         return;
@@ -185,7 +186,7 @@ export default function MoviePlayer({ videoUrl, posterUrl, peliculaId, initialTi
             setShowControls(true);
           }
           break;
-          
+
         case 'KeyF':
           e.preventDefault();
           const playerContainer = videoRef.current?.parentElement;
@@ -212,11 +213,11 @@ export default function MoviePlayer({ videoUrl, posterUrl, peliculaId, initialTi
     if (showAd) return; // Bloquear controles si hay anuncio
 
     setShowControls(true);
-    
+
     if (controlsTimeoutRef.current) {
       clearTimeout(controlsTimeoutRef.current);
     }
-    
+
     // Ocultar controles después de 2.5 segundos de inactividad (solo si está reproduciendo)
     controlsTimeoutRef.current = setTimeout(() => {
       if (isPlaying) {
@@ -309,8 +310,22 @@ export default function MoviePlayer({ videoUrl, posterUrl, peliculaId, initialTi
     if (showAd) return;
     const newVolume = parseFloat(e.target.value);
     setVolume(newVolume);
+    if (newVolume > 0) previousVolumeRef.current = newVolume;
     if (videoRef.current) {
       videoRef.current.volume = newVolume;
+    }
+  };
+
+  const toggleMute = () => {
+    if (showAd) return;
+    if (volume > 0) {
+      previousVolumeRef.current = volume;
+      setVolume(0);
+      if (videoRef.current) videoRef.current.volume = 0;
+    } else {
+      const restoreVol = previousVolumeRef.current > 0 ? previousVolumeRef.current : 1;
+      setVolume(restoreVol);
+      if (videoRef.current) videoRef.current.volume = restoreVol;
     }
   };
 
@@ -343,25 +358,25 @@ export default function MoviePlayer({ videoUrl, posterUrl, peliculaId, initialTi
   return (
     <section className="bg-[#020817] pb-20 text-white">
       <div className="max-w-7xl mx-auto px-6">
-        
+
         <h2 className="text-3xl font-bold mb-8 border-l-4 border-[#3a86ff] pl-4">
           Reproductor de Película
         </h2>
 
-        <div 
+        <div
           className={`relative aspect-video rounded-2xl overflow-hidden shadow-2xl border border-white/5 bg-black ${!showControls && isFullscreen ? 'cursor-none' : ''}`}
           onMouseMove={handleMouseMove}
           onMouseLeave={handleMouseLeave}
         >
           {/* VIDEO PRINCIPAL */}
-          <video 
+          <video
             ref={videoRef}
             src={videoUrl}
             poster={posterUrl}
             className={`w-full h-full object-contain ${showControls && !showAd ? 'cursor-pointer' : 'cursor-none'}`}
             onTimeUpdate={handleTimeUpdate}
             onLoadedMetadata={handleLoadedMetadata}
-            onClick={togglePlay} 
+            onClick={togglePlay}
           />
 
           {/* SUPERPOSICIÓN DE ANUNCIO DE YOUTUBE */}
@@ -369,7 +384,7 @@ export default function MoviePlayer({ videoUrl, posterUrl, peliculaId, initialTi
             <div className="absolute inset-0 z-40 bg-black flex items-center justify-center pointer-events-auto">
               {/* Bloqueador de clics/interacción para evitar que pausen el anuncio */}
               <div className="absolute inset-0 z-50 bg-transparent cursor-not-allowed pointer-events-auto" />
-              
+
               <iframe
                 src={`https://www.youtube.com/embed/${currentAdId}?autoplay=1&controls=0&mute=0&rel=0&showinfo=0&iv_load_policy=3&modestbranding=1&disablekb=1&enablejsapi=1`}
                 className="w-full h-full pointer-events-none"
@@ -389,13 +404,13 @@ export default function MoviePlayer({ videoUrl, posterUrl, peliculaId, initialTi
 
           {/* CONTROLES DEL REPRODUCTOR */}
           <div className={`absolute inset-0 flex flex-col justify-end p-4 transition-opacity duration-300 z-10 pointer-events-none ${showControls || !isPlaying ? 'opacity-100' : 'opacity-0'}`}>
-            
+
             {/* Fondo degradado oscuro solo en la base */}
             <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black/90 via-black/40 to-transparent -z-10 pointer-events-none" />
 
             {/* Contenedor de controles con pointer-events-auto para que sean clickeables */}
             <div className="pointer-events-auto w-full">
-              <input 
+              <input
                 type="range"
                 min="0"
                 max={duration || 100}
@@ -421,10 +436,10 @@ export default function MoviePlayer({ videoUrl, posterUrl, peliculaId, initialTi
                   </button>
 
                   <div className="flex items-center group/volume">
-                    <button className="p-2 hover:bg-white/10 rounded-full transition-colors z-10 relative" disabled={showAd}>
+                    <button onClick={toggleMute} className="p-2 hover:bg-white/10 rounded-full transition-colors z-10 relative" disabled={showAd}>
                       {volume === 0 ? <VolumeX /> : <Volume2 />}
                     </button>
-                    <input 
+                    <input
                       type="range"
                       min="0"
                       max="1"
@@ -448,7 +463,7 @@ export default function MoviePlayer({ videoUrl, posterUrl, peliculaId, initialTi
             </div>
           </div>
         </div>
-        
+
         <p className="mt-6 text-sm text-gray-400 italic">
           * Nota: El reproductor está cargando una imagen de fondo temporal hasta que la ruta del video en la base de datos esté completa.
         </p>

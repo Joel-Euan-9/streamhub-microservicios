@@ -2,6 +2,7 @@ import Navbar from "../components/ui/Navbar";
 import Link from "next/link";
 import { fetchWithAuth } from "@/lib/api";
 import { Star } from "lucide-react";
+import { getUserProfile } from "@/app/actions/profile";
 
 // 1. Definimos las interfaces de lo que nos devuelve el Gateway
 interface Genero {
@@ -39,6 +40,7 @@ async function getPeliculas(): Promise<Pelicula[]> {
 
 export default async function PeliculasPage() {
   const peliculas = await getPeliculas();
+  const userProfile = await getUserProfile();
 
   // 3. Lógica para agrupar películas por orden alfabético
   const peliculasAgrupadas = peliculas.reduce((grupos: Record<string, Pelicula[]>, pelicula) => {
@@ -74,7 +76,9 @@ export default async function PeliculasPage() {
 
               {/* Grid de Películas de esa letra */}
               <div className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-6">
-                {peliculasAgrupadas[letra].map((movie) => (
+                {peliculasAgrupadas[letra].map((movie) => {
+                  const showPremiumBadge = movie.requierePremium && (!userProfile || userProfile.plan === "BASIC");
+                  return (
                   <Link 
                     href={`/peliculas/${movie.id}`} 
                     key={movie.id} 
@@ -88,7 +92,7 @@ export default async function PeliculasPage() {
                       />
                       
                       {/* Etiqueta Premium si requiere suscripción */}
-                      {movie.requierePremium && (
+                      {showPremiumBadge && (
                         <div className="absolute right-2 top-2 z-10 flex items-center gap-1 rounded-full bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-400 px-2.5 py-1 text-[9px] font-black uppercase tracking-wider text-black shadow-[0_4px_10px_rgba(245,158,11,0.55)] border border-amber-300/30">
                           <Star size={9} fill="currentColor" className="text-black" />
                           Premium
@@ -112,7 +116,8 @@ export default async function PeliculasPage() {
                       </p>
                     </div>
                   </Link>
-                ))}
+                  );
+                })}
               </div>
             </div>
           ))

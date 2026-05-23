@@ -52,3 +52,89 @@ export async function getStudioMoviesAction() {
     return { success: false, error: "Error de conexión", movies: [], profile: null };
   }
 }
+
+import { revalidatePath } from "next/cache";
+
+// Obtener la configuración del perfil del usuario logueado (si es STUDIO)
+export async function getStudioProfileAction() {
+  try {
+    const res = await fetchWithAuth(`http://gateway-service:8000/api/studio/perfil`, {
+      cache: 'no-store'
+    });
+
+    if (!res.ok) {
+      return { success: false, error: 'No se pudo obtener el perfil de studio' };
+    }
+
+    const data = await res.json();
+    return { success: true, profile: data };
+  } catch (error) {
+    console.error("Error en getStudioProfileAction:", error);
+    return { success: false, error: 'Error de servidor' };
+  }
+}
+
+// Actualizar el perfil del canal
+export async function updateStudioProfileAction(data: {
+  nombreCanal?: string;
+  descripcion?: string;
+  fotoPerfilUrl?: string;
+  fotoPortadaUrl?: string;
+  metodoPago?: string;
+  datosPago?: string;
+}) {
+  try {
+    const res = await fetchWithAuth(`http://gateway-service:8000/api/studio/perfil`, {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+
+    if (!res.ok) {
+      return { success: false, error: 'No se pudo actualizar el perfil' };
+    }
+
+    revalidatePath('/studio/configuracion');
+    revalidatePath('/canales');
+    
+    return { success: true };
+  } catch (error) {
+    console.error("Error en updateStudioProfileAction:", error);
+    return { success: false, error: 'Error de servidor' };
+  }
+}
+
+// Obtener todos los canales públicos
+export async function getCanalesAction() {
+  try {
+    const res = await fetch(`http://gateway-service:8000/api/canales`, {
+      cache: 'no-store'
+    });
+
+    if (!res.ok) {
+      return [];
+    }
+
+    return await res.json();
+  } catch (error) {
+    console.error("Error en getCanalesAction:", error);
+    return [];
+  }
+}
+
+// Obtener un canal público específico por ID de perfilStudio
+export async function getCanalByIdAction(id: string) {
+  try {
+    const res = await fetch(`http://gateway-service:8000/api/canales/${id}`, {
+      cache: 'no-store'
+    });
+
+    if (!res.ok) {
+      return null;
+    }
+
+    return await res.json();
+  } catch (error) {
+    console.error("Error en getCanalByIdAction:", error);
+    return null;
+  }
+}

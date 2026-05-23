@@ -36,6 +36,7 @@ model User {
   favoritos          Favorito[]
   visualizaciones    Visualizacion[]
   transacciones      Transaccion[]   // Relación con el historial de billetera
+  perfilStudio       PerfilStudio?   // Relación 1 a 1 con el perfil de canal (STUDIO)
 
   @@map("users")
 }
@@ -76,4 +77,26 @@ model Visualizacion {
 
   @@id([usuarioId, peliculaId])
   @@map("visualizaciones")
+}
+
+model PerfilStudio {
+  id             String  @id @default(uuid())
+  usuarioId      String  @unique @map("usuario_id")
+  
+  // Perfil del Canal
+  nombreCanal    String  @map("nombre_canal")
+  descripcion    String? @db.Text
+  fotoPerfilUrl  String? @map("foto_perfil_url")
+  fotoPortadaUrl String? @map("foto_portada_url")
+  
+  // Métodos de Cobro
+  metodoPago     String? @map("metodo_pago") // Ej: "PAYPAL", "TRANSFERENCIA"
+  datosPago      String? @map("datos_pago")  // Ej: el correo o la cuenta CLABE
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  usuario        User     @relation(fields: [usuarioId], references: [id])
+  
+  @@map("perfiles_studio")
 }

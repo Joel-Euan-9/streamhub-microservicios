@@ -180,4 +180,23 @@ app.patch('/peliculas/:id/estadisticas', async (req, res) => {
   }
 });
 
+app.patch('/peliculas/:id/estadisticas/diff', async (req, res) => {
+  const { likesDiff, dislikesDiff } = req.body;
+  try {
+    const dataUpdate = {};
+    if (likesDiff) dataUpdate.likesTotales = { increment: likesDiff };
+    if (dislikesDiff) dataUpdate.dislikesTotales = { increment: dislikesDiff };
+
+    const peliculaActualizada = await prisma.pelicula.update({
+      where: { id: req.params.id },
+      data: dataUpdate
+    });
+    
+    res.json({ success: true, likesTotales: peliculaActualizada.likesTotales, dislikesTotales: peliculaActualizada.dislikesTotales });
+  } catch (error) {
+    console.error("Error al actualizar estadísticas por diff:", error);
+    res.status(500).json({ error: "Error al actualizar estadísticas" });
+  }
+});
+
 app.listen(8000, () => console.log('Catalog Service running on port 8000'));

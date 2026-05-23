@@ -453,11 +453,27 @@ app.put('/profile/plan/:id', async (req, res) => {
     const user = await prisma.user.update({
       where: { id: req.params.id },
       data: { plan: plan },
-      select: { id: true, plan: true }
+      select: { id: true, plan: true, name: true }
     });
+
+    if (plan === 'STUDIO') {
+      const existingPerfil = await prisma.perfilStudio.findUnique({
+        where: { usuarioId: user.id }
+      });
+      if (!existingPerfil) {
+        await prisma.perfilStudio.create({
+          data: {
+            usuarioId: user.id,
+            nombreCanal: user.name || "Canal Nuevo",
+            descripcion: "Canal independiente para películas y contenido exclusivo.",
+          }
+        });
+      }
+    }
 
     res.json({ message: "Plan actualizado", plan: user.plan });
   } catch (error) {
+    console.error("Error al actualizar plan:", error);
     res.status(500).json({ error: "Error al actualizar plan" });
   }
 });
@@ -567,6 +583,20 @@ app.get('/favoritos/:usuarioId', async (req, res) => {
   } catch (error) {
     console.error("Error al obtener favoritos:", error);
     res.status(500).json({ error: "Error al obtener favoritos" });
+  }
+});
+
+// Obtener el conteo total de favoritos de una película
+app.get('/favoritos/count/:peliculaId', async (req, res) => {
+  try {
+    const { peliculaId } = req.params;
+    const count = await prisma.favorito.count({
+      where: { peliculaId }
+    });
+    res.json({ count });
+  } catch (error) {
+    console.error("Error al contar favoritos:", error);
+    res.status(500).json({ error: "Error al contar favoritos" });
   }
 });
 
@@ -682,6 +712,107 @@ app.post('/usuarios/:id/retirar', async (req, res) => {
   } catch (error) {
     console.error("Error al procesar retiro:", error);
     res.status(500).json({ error: "Error interno al procesar el retiro de fondos." });
+  }
+});
+
+// --- RUTAS DEL PERFIL DE STUDIO (CANALES) ---
+
+// Obtener o crear el perfil de studio del usuario
+app.get('/studio/perfil/:usuarioId', async (req, res) => {
+  const { usuarioId } = req.params;
+  try {
+    const user = await prisma.user.findUnique({ where: { id: usuarioId }, include: { perfilStudio: true } });
+    if (!user) return res.status(404).json({ error: "Usuario no encontrado" });
+
+    if (user.plan !== 'STUDIO') {
+      return res.status(403).json({ error: "El usuario no tiene plan STUDIO" });
+    }
+
+    if (user.perfilStudio) {
+      return res.json(user.perfilStudio);
+    } else {
+      const nuevoPerfil = await prisma.perfilStudio.create({
+        data: {
+          usuarioId: user.id,
+          nombreCanal: user.name || "Canal sin nombre",
+          descripcion: "",
+          fotoPerfilUrl: "",
+          fotoPortadaUrl: ""
+        }
+      });
+      return res.json(nuevoPerfil);
+    }
+  } catch (error) {
+    console.error("Error obteniendo perfil studio:", error);
+    res.status(500).json({ error: "Error interno al obtener perfil" });
+  }
+});
+
+// Actualizar perfil de studio
+app.post('/studio/perfil/:usuarioId', async (req, res) => {
+  const { usuarioId } = req.params;
+  const { nombreCanal, descripcion, fotoPerfilUrl, fotoPortadaUrl, metodoPago, datosPago } = req.body;
+  try {
+    const user = await prisma.user.findUnique({ where: { id: usuarioId } });
+    if (!user || user.plan !== 'STUDIO') return res.status(403).json({ error: "Acceso denegado" });
+
+    const perfil = await prisma.perfilStudio.upsert({
+      where: { usuarioId },
+      update: { nombreCanal, descripcion, fotoPerfilUrl, fotoPortadaUrl, metodoPago, datosPago },
+      create: { usuarioId, nombreCanal: nombreCanal || user.name || "Canal sin nombre", descripcion, fotoPerfilUrl, fotoPortadaUrl, metodoPago, datosPago }
+    });
+    res.json(perfil);
+  } catch (error) {
+    console.error("Error actualizando perfil studio:", error);
+    res.status(500).json({ error: "Error interno al actualizar perfil" });
+  }
+});
+
+// Listar todos los canales públicos
+app.get('/canales', async (req, res) => {
+  try {
+    const canales = await prisma.perfilStudio.findMany({
+      include: {
+        usuario: { select: { id: true, name: true, plan: true } }
+      }
+    });
+    const validos = canales.filter(c => c.usuario.plan === 'STUDIO');
+    res.json(validos);
+  } catch (error) {
+    console.error("Error obteniendo canales:", error);
+    res.status(500).json({ error: "Error interno al obtener canales" });
+  }
+});
+
+// Obtener un canal público específico
+app.get('/canales/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const canal = await prisma.perfilStudio.findUnique({
+      where: { id },
+      include: { usuario: { select: { id: true, plan: true } } }
+    });
+    if (!canal || canal.usuario.plan !== 'STUDIO') return res.status(404).json({ error: "Canal no encontrado" });
+    res.json(canal);
+  } catch (error) {
+    console.error("Error obteniendo canal:", error);
+    res.status(500).json({ error: "Error interno al obtener canal" });
+  }
+});
+
+// Obtener canal público por usuarioId
+app.get('/canales/usuario/:usuarioId', async (req, res) => {
+  const { usuarioId } = req.params;
+  try {
+    const canal = await prisma.perfilStudio.findUnique({
+      where: { usuarioId },
+      include: { usuario: { select: { id: true, name: true, plan: true } } }
+    });
+    if (!canal || canal.usuario.plan !== 'STUDIO') return res.status(404).json({ error: "Canal no encontrado" });
+    res.json(canal);
+  } catch (error) {
+    console.error("Error obteniendo canal por usuarioId:", error);
+    res.status(500).json({ error: "Error interno al obtener canal" });
   }
 });
 
