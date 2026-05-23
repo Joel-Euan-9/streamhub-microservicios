@@ -53,3 +53,17 @@ export async function checkFavoriteAction(peliculaId: string) {
     return { success: false, error: "Error de conexión" };
   }
 }
+
+export async function getFavoritosCountAction(peliculaId: string) {
+  try {
+    const res = await fetchWithAuth(`http://gateway-service:8000/api/favoritos/count/${peliculaId}`, {
+      cache: 'no-store'
+    });
+    if (!res.ok) return { success: false, count: 0 };
+    const data = await res.json();
+    return { success: true, count: data.count || 0 };
+  } catch (error) {
+    console.error("Error getFavoritosCountAction:", error);
+    return { success: false, count: 0 };
+  }
+}

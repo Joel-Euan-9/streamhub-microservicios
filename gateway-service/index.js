@@ -475,13 +475,35 @@ app.post('/api/interacciones/comentarios/count-batch', authMiddleware, async (re
  */
 app.post('/api/interacciones/votar', authMiddleware, async (req, res) => {
   try {
-    const resp = await axios.post(`${INTERACTIONS_URL}/interaccion`, req.body);
+    const payload = {
+      usuarioId: req.user.userId,
+      peliculaId: req.body.peliculaId,
+      tipo: req.body.tipo
+    };
+    const resp = await axios.post(`${INTERACTIONS_URL}/interaccion`, payload);
     res.json(resp.data);
   } catch (error) {
     if (error.response && error.response.status === 400) {
       return res.status(400).json({ error: error.response.data.error });
     }
     res.status(500).json({ error: "Error al registrar la interacción" });
+  }
+});
+
+/**
+ * @swagger
+ * /api/interacciones/status/{peliculaId}:
+ *   get:
+ *     summary: Obtiene el estado del voto del usuario actual en una película
+ *     tags:
+ *       - Interacciones
+ */
+app.get('/api/interacciones/status/:peliculaId', authMiddleware, async (req, res) => {
+  try {
+    const resp = await axios.get(`${INTERACTIONS_URL}/interaccion/status/${req.params.peliculaId}/${req.user.userId}`);
+    res.json(resp.data);
+  } catch (error) {
+    res.status(500).json({ error: "Error al obtener estado de la interacción" });
   }
 });
 
@@ -628,6 +650,23 @@ app.get('/api/favoritos/check/:peliculaId', authMiddleware, async (req, res) => 
 
 /**
  * @swagger
+ * /api/favoritos/count/{peliculaId}:
+ *   get:
+ *     summary: Obtiene la cantidad total de veces que una película fue agregada a favoritos
+ *     tags:
+ *       - Favoritos
+ */
+app.get('/api/favoritos/count/:peliculaId', async (req, res) => {
+  try {
+    const resp = await axios.get(`${USERS_URL}/favoritos/count/${req.params.peliculaId}`);
+    res.json(resp.data);
+  } catch (error) {
+    res.status(500).json({ error: "Error al contar favoritos" });
+  }
+});
+
+/**
+ * @swagger
  * /api/favoritos:
  *   get:
  *     summary: Obtiene las películas favoritas del usuario autenticado con sus detalles
@@ -730,6 +769,65 @@ app.post('/api/perfil/retirar', authMiddleware, async (req, res) => {
     }
     console.error("Error al retirar fondos en gateway:", error.message);
     res.status(500).json({ error: "Error al procesar el retiro de fondos" });
+  }
+});
+
+// --- RUTAS DE STUDIO Y CANALES ---
+
+app.get('/api/studio/perfil', authMiddleware, async (req, res) => {
+  try {
+    const resp = await axios.get(`${USERS_URL}/studio/perfil/${req.user.userId}`);
+    res.json(resp.data);
+  } catch (error) {
+    if (error.response && error.response.status === 403) {
+      return res.status(403).json(error.response.data);
+    }
+    res.status(500).json({ error: "Error obteniendo perfil de studio" });
+  }
+});
+
+app.post('/api/studio/perfil', authMiddleware, async (req, res) => {
+  try {
+    const resp = await axios.post(`${USERS_URL}/studio/perfil/${req.user.userId}`, req.body);
+    res.json(resp.data);
+  } catch (error) {
+    if (error.response && error.response.status === 403) {
+      return res.status(403).json(error.response.data);
+    }
+    res.status(500).json({ error: "Error actualizando perfil de studio" });
+  }
+});
+
+app.get('/api/canales', async (req, res) => {
+  try {
+    const resp = await axios.get(`${USERS_URL}/canales`);
+    res.json(resp.data);
+  } catch (error) {
+    res.status(500).json({ error: "Error obteniendo canales" });
+  }
+});
+
+app.get('/api/canales/:id', async (req, res) => {
+  try {
+    const resp = await axios.get(`${USERS_URL}/canales/${req.params.id}`);
+    res.json(resp.data);
+  } catch (error) {
+    if (error.response && error.response.status === 404) {
+      return res.status(404).json(error.response.data);
+    }
+    res.status(500).json({ error: "Error obteniendo canal" });
+  }
+});
+
+app.get('/api/canales/usuario/:usuarioId', async (req, res) => {
+  try {
+    const resp = await axios.get(`${USERS_URL}/canales/usuario/${req.params.usuarioId}`);
+    res.json(resp.data);
+  } catch (error) {
+    if (error.response && error.response.status === 404) {
+      return res.status(404).json(error.response.data);
+    }
+    res.status(500).json({ error: "Error obteniendo canal por usuario" });
   }
 });
 

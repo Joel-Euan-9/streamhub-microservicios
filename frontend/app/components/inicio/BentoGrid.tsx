@@ -38,7 +38,11 @@ export default function BentoGrid({ title, items, total, viewAllLink }: BentoGri
         {mainItem && (
           <Link 
             href={`/peliculas/${mainItem.id}`}
-            className="group relative overflow-hidden rounded-2xl md:col-span-2 lg:col-span-2 lg:row-span-2 aspect-[16/9] md:aspect-auto shadow-[0_5px_15px_rgba(0,0,0,0.3)] block"
+            className={`group relative overflow-hidden rounded-2xl shadow-[0_5px_15px_rgba(0,0,0,0.3)] block ${
+              subItems.length === 0 
+                ? 'col-span-1 md:col-span-2 lg:col-span-4 aspect-[16/9] md:aspect-[21/9] lg:aspect-[3/1]' 
+                : 'md:col-span-2 lg:col-span-2 lg:row-span-2 aspect-[16/9] md:aspect-auto'
+            }`}
           >
             <img 
               src={mainItem.img} 

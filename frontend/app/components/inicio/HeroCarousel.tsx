@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Heart, Play } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Bookmark, Play } from "lucide-react";
 import { toggleFavoriteAction, checkFavoriteAction } from "@/app/actions/favoritos";
 
 // Definimos qué campos esperamos de la BD
@@ -20,6 +21,7 @@ interface Props {
 }
 
 export default function HeroCarousel({ peliculas }: Props) {
+  const router = useRouter();
   const [index, setIndex] = useState(0);
   
   // Mapear qué películas son favoritas
@@ -73,8 +75,9 @@ export default function HeroCarousel({ peliculas }: Props) {
     
     if (res.success) {
       setFavoritesMap(prev => ({ ...prev, [currentMovie.id]: res.isFavorite }));
-      setToastMessage(res.message);
+      setToastMessage(res.message || (res.isFavorite ? "Agregado a favoritos" : "Eliminado de favoritos"));
       setTimeout(() => setToastMessage(null), 3000);
+      router.refresh(); // REFRESH THE PAGE DATA (SERVER COMPONENTS)
     } else {
       setToastMessage("Error al actualizar favoritos");
       setTimeout(() => setToastMessage(null), 3000);
@@ -128,9 +131,9 @@ export default function HeroCarousel({ peliculas }: Props) {
               disabled={isLoadingFav}
               className="flex items-center gap-2 rounded-full bg-white/10 backdrop-blur-md px-5 py-3 font-bold transition-all hover:bg-white/20 border border-white/10 active:scale-95"
             >
-              <Heart 
+              <Bookmark 
                 size={22} 
-                className={`transition-colors duration-300 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-white'}`} 
+                className={`transition-colors duration-300 ${isFavorite ? 'fill-amber-400 text-amber-400' : 'text-white'}`} 
               />
             </button>
           </div>

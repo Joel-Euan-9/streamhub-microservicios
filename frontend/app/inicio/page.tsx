@@ -10,6 +10,7 @@ import CarouselContainer from "@/app/components/inicio/CarouselContainer";
 import BentoGrid from "@/app/components/inicio/BentoGrid";
 import { getHistorialAction } from "@/app/actions/historial";
 import { getFavoritosAction } from "@/app/actions/favoritos";
+import { getUserProfile } from "@/app/actions/profile";
 
 // --- DATOS ESTATICOS (Mocks para secciones que aún no tienen API) ---
 const GENRES = [
@@ -53,6 +54,8 @@ async function getTopPeliculas() {
 }
 
 export default async function InicioPage() {
+  const userProfile = await getUserProfile();
+  
   const peliculas = await getEstrenos();
   const peliculasHero = peliculas.slice(0, 4);
 
@@ -82,7 +85,9 @@ export default async function InicioPage() {
 
           {/* SECCIÓN: LO NUEVO */}
           <CarouselContainer title="Lo Nuevo">
-            {peliculas.map((movie: any) => (
+            {peliculas.map((movie: any) => {
+              const showPremiumBadge = movie.requierePremium && (!userProfile || userProfile.plan === "BASIC");
+              return (
               <MovieCard
                 key={movie.id}
                 id={movie.id} // <-- ¡Esta es la línea nueva que debes agregar!
@@ -90,9 +95,9 @@ export default async function InicioPage() {
                 year={new Date(movie.fechaLanzamiento).getFullYear().toString()}
                 genre={movie.generos?.[0]?.nombre || "Estreno"}
                 img={movie.rutaCaratula}
-                requierePremium={movie.requierePremium}
+                requierePremium={showPremiumBadge}
               />
-            ))}
+            )})}
           </CarouselContainer>
 
           {/* SECCIÓN: TOP 10 (Usando CarouselContainer) */}

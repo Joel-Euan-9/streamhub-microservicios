@@ -8,6 +8,8 @@ import { notFound } from 'next/navigation';
 import { fetchWithAuth } from '@/lib/api';
 import { getProgressAction } from '@/app/actions/historial';
 import { getUserProfile, registerMovieView } from '@/app/actions/profile';
+import { getFavoritosCountAction } from '@/app/actions/favoritos';
+import { getVotoStatusAction } from '@/app/actions/interacciones';
 
 // Función para consultar si la película es favorita
 async function checkIsFavorite(id: string) {
@@ -26,10 +28,10 @@ async function checkIsFavorite(id: string) {
 // Función para traer datos de UNA sola película del Gateway
 async function getMovieDetails(id: string) {
   try {
-    const res = await fetch(`http://gateway-service:8000/api/peliculas/${id}`, { 
-      cache: 'no-store' 
+    const res = await fetch(`http://gateway-service:8000/api/peliculas/${id}`, {
+      cache: 'no-store'
     });
-    
+
     if (!res.ok) return null;
     return res.json();
   } catch (error) {
@@ -44,7 +46,7 @@ interface Props {
 
 export default async function PeliculaDetailPage({ params }: Props) {
   const { id } = await params;
-  
+
   const movie = await getMovieDetails(id);
 
   if (!movie) {
@@ -54,6 +56,19 @@ export default async function PeliculaDetailPage({ params }: Props) {
   // Obtener perfil y plan del usuario
   const profile = await getUserProfile();
   const userPlan = profile?.plan || 'BASIC';
+
+  // Obtener info del canal del creador si es película de TERCEROS
+  let creatorChannel = null;
+  if (movie.tipoContenido === 'TERCEROS' && movie.creadorId) {
+    try {
+      const res = await fetch(`http://gateway-service:8000/api/canales/usuario/${movie.creadorId}`, { cache: 'no-store' });
+      if (res.ok) {
+        creatorChannel = await res.json();
+      }
+    } catch (e) {
+      console.error("Error al obtener canal del creador:", e);
+    }
+  }
 
   // Validar límite diario si el usuario tiene plan básico
   let isDailyLimitReached = false;
@@ -65,6 +80,12 @@ export default async function PeliculaDetailPage({ params }: Props) {
   }
 
   const initialIsFavorite = await checkIsFavorite(id);
+  const favoritosCountData = await getFavoritosCountAction(id);
+  const initialFavoritosCount = favoritosCountData.success ? favoritosCountData.count : 0;
+
+  const votoStatusData = await getVotoStatusAction(id);
+  const initialVotoStatus = votoStatusData.success ? votoStatusData.tipo : null;
+
   const progressData = await getProgressAction(id);
   const initialTime = progressData.completada ? 0 : (progressData.minutoPausa || 0);
 
@@ -73,14 +94,17 @@ export default async function PeliculaDetailPage({ params }: Props) {
   return (
     <>
       <Navbar />
-      
+
       <main className="pt-[70px] bg-[#020817]">
-        
-        <MovieHero 
-          movie={{ ...movie, id }} 
-          initialIsFavorite={initialIsFavorite} 
-          userPlan={userPlan} 
+
+        <MovieHero
+          movie={{ ...movie, id }}
+          initialIsFavorite={initialIsFavorite}
+          initialFavoritosCount={initialFavoritosCount}
+          initialVotoStatus={initialVotoStatus}
+          userPlan={userPlan}
           isDailyLimitReached={isDailyLimitReached}
+          creatorChannel={creatorChannel}
         />
 
         <div id="movie-player">
@@ -89,7 +113,7 @@ export default async function PeliculaDetailPage({ params }: Props) {
           ) : isDailyLimitReached ? (
             <DailyLimitPaywall />
           ) : (
-            <MoviePlayer 
+            <MoviePlayer
               videoUrl={movie.rutaVideoCompleta}
               posterUrl={movie.rutaImagenFondo}
               peliculaId={id}

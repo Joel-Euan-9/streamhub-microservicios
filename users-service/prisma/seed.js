@@ -13,13 +13,40 @@ async function main() {
   // 1. Usuario con Plan STUDIO (Con saldo y transacciones)
   const userStudio1 = await prisma.user.upsert({
     where: { email: 'joel.euan@streamhub.com' },
-    update: {},
+    update: {
+      saldoBilletera: 600.00,
+      perfilStudio: {
+        upsert: {
+          create: {
+            nombreCanal: 'Anime Films',
+            fotoPerfilUrl: 'https://www.shutterstock.com/shutterstock/photos/204052951/display_1500/stock-vector-animation-movies-stamp-204052951.jpg',
+            fotoPortadaUrl: 'https://p4.wallpaperbetter.com/wallpaper/444/729/235/dragon-ball-z-shenron-film-grain-hd-wallpaper-preview.jpg',
+            descripcion: 'Este es un espacio pensado para quienes disfrutan del anime y quieren conocer más de sus series favoritas.\n\nEn este canal encontrarás:\nResúmenes claros, completos y fáciles de seguir\nTeorías interesantes y profundas que expanden cada historia\nAnálisis detallados de personajes, tramas y universos\n Curiosidades, datos ocultos y contenido extra sobre distintos animes\nTodo explicado de forma sencilla y entretenida',
+          },
+          update: {
+            nombreCanal: 'Anime Films',
+            fotoPerfilUrl: 'https://www.shutterstock.com/shutterstock/photos/204052951/display_1500/stock-vector-animation-movies-stamp-204052951.jpg',
+            fotoPortadaUrl: 'https://p4.wallpaperbetter.com/wallpaper/444/729/235/dragon-ball-z-shenron-film-grain-hd-wallpaper-preview.jpg',
+            descripcion: 'Este es un espacio pensado para quienes disfrutan del anime y quieren conocer más de sus series favoritas.\n\nEn este canal encontrarás:\nResúmenes claros, completos y fáciles de seguir\nTeorías interesantes y profundas que expanden cada historia\nAnálisis detallados de personajes, tramas y universos\n Curiosidades, datos ocultos y contenido extra sobre distintos animes\nTodo explicado de forma sencilla y entretenida',
+          }
+        }
+      }
+    },
     create: {
+      id: 'b274e4fe-64fb-4021-a076-e1a820f5c569',
       email: 'joel.euan@streamhub.com',
       name: 'Joel Euan',
       password: hashedPassword,
       plan: 'STUDIO',
-      saldoBilletera: 25.50, // Saldo simulado inicial
+      saldoBilletera: 600.00, // Saldo simulado inicial (600 según la petición)
+      perfilStudio: {
+        create: {
+          nombreCanal: 'Anime Films',
+          fotoPerfilUrl: 'https://www.shutterstock.com/shutterstock/photos/204052951/display_1500/stock-vector-animation-movies-stamp-204052951.jpg',
+          fotoPortadaUrl: 'https://p4.wallpaperbetter.com/wallpaper/444/729/235/dragon-ball-z-shenron-film-grain-hd-wallpaper-preview.jpg',
+          descripcion: 'Este es un espacio pensado para quienes disfrutan del anime y quieren conocer más de sus series favoritas.\n\nEn este canal encontrarás:\nResúmenes claros, completos y fáciles de seguir\nTeorías interesantes y profundas que expanden cada historia\nAnálisis detallados de personajes, tramas y universos\n Curiosidades, datos ocultos y contenido extra sobre distintos animes\nTodo explicado de forma sencilla y entretenida',
+        }
+      },
       transacciones: {
         create: [
           {
@@ -38,13 +65,39 @@ async function main() {
   // 2. Otro Usuario con Plan STUDIO (Recién iniciado, sin saldo)
   const userStudio2 = await prisma.user.upsert({
     where: { email: 'julio.olivera@streamhub.com' },
-    update: {},
+    update: {
+      perfilStudio: {
+        upsert: {
+          create: {
+            nombreCanal: 'Julio Air Force',
+            fotoPerfilUrl: 'https://static.vecteezy.com/system/resources/previews/014/184/860/non_2x/fighter-air-force-logo-flat-style-vector.jpg',
+            fotoPortadaUrl: 'https://img.magnific.com/vector-gratis/aviones-militares-fondo-escena-al-aire-libre_1308-127792.jpg?semt=ais_hybrid&w=740&q=80',
+            descripcion: 'Somos un estudio de cine animado que produce películas sobre la historia. Intentamos llevar al espectador a la acción junto a las personas increíbles que vivieron estos eventos.',
+          },
+          update: {
+            nombreCanal: 'Julio Air Force',
+            fotoPerfilUrl: 'https://static.vecteezy.com/system/resources/previews/014/184/860/non_2x/fighter-air-force-logo-flat-style-vector.jpg',
+            fotoPortadaUrl: 'https://img.magnific.com/vector-gratis/aviones-militares-fondo-escena-al-aire-libre_1308-127792.jpg?semt=ais_hybrid&w=740&q=80',
+            descripcion: 'Somos un estudio de cine animado que produce películas sobre la historia. Intentamos llevar al espectador a la acción junto a las personas increíbles que vivieron estos eventos.',
+          }
+        }
+      }
+    },
     create: {
+      id: 'a6fc9406-6c13-44ca-801d-8e429c1d19df',
       email: 'julio.olivera@streamhub.com',
       name: 'Julio Olivera',
       password: hashedPassword,
       plan: 'STUDIO',
       saldoBilletera: 0.0,
+      perfilStudio: {
+        create: {
+          nombreCanal: 'Julio Air Force',
+          fotoPerfilUrl: 'https://static.vecteezy.com/system/resources/previews/014/184/860/non_2x/fighter-air-force-logo-flat-style-vector.jpg',
+          fotoPortadaUrl: 'https://img.magnific.com/vector-gratis/aviones-militares-fondo-escena-al-aire-libre_1308-127792.jpg?semt=ais_hybrid&w=740&q=80',
+          descripcion: 'Somos un estudio de cine animado que produce películas sobre la historia. Intentamos llevar al espectador a la acción junto a las personas increíbles que vivieron estos eventos.',
+        }
+      }
     },
   });
 
