@@ -380,47 +380,6 @@ async function main() {
 
   const ID_JOEL = '3b3ae30b-76e0-4e74-9b14-b962fa43d1e2';
   const ID_JULIO = '76ca7bdd-0182-41f0-8fe9-13594ae4f64c';
-<<<<<<< HEAD
-
-  // Película 1 de Joel
-  await prisma.pelicula.create({
-    data: {
-      titulo: 'Cenotes: Ecos del Inframundo',
-      descripcion: 'Un viaje documental profundo a los místicos cenotes de Yucatán, explorando su belleza y las leyendas mayas que los rodean.',
-      fechaLanzamiento: new Date('1999-05-12'),
-      duracion: 45,
-      rutaCaratula: 'https://images.unsplash.com/photo-1580228491851-f402c01990cc?auto=format&fit=crop&q=80&w=600&h=900',
-      rutaVideo: 'cenotes-doc.mp4',
-      rutaImagenFondo: 'https://images.unsplash.com/photo-1502622796232-e88458466c33?auto=format&fit=crop&q=80&w=1920&h=1080',
-      rutaTrailer: 'https://youtu.be/F4a0s0d1D6s', // Video genérico de cenotes
-      requierePremium: false,
-      tipoContenido: 'TERCEROS',
-      creadorId: ID_JOEL,
-      vistasTotales: 1540, likesTotales: 310, dislikesTotales: 5,
-      generos: { connect: [{ id: documental.id }, { id: misterio.id }, { id: aventura.id }] }
-    }
-  });
-
-  // Película 2 de Joel
-  await prisma.pelicula.create({
-    data: {
-      titulo: 'Código y Café: La vida del desarrollador',
-      descripcion: 'Un cortometraje cómico y dramático sobre los retos de un estudiante de ingeniería de software a punto de graduarse y su proyecto final.',
-      fechaLanzamiento: new Date('1999-01-20'),
-      duracion: 32,
-      rutaCaratula: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&q=80&w=600&h=900',
-      rutaVideo: 'codigo-y-cafe.mp4',
-      rutaImagenFondo: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&q=80&w=1920&h=1080',
-      rutaTrailer: 'https://youtu.be/mKWJqP8KEMg',
-      requierePremium: false,
-      tipoContenido: 'TERCEROS',
-      creadorId: ID_JOEL,
-      vistasTotales: 3200, likesTotales: 850, dislikesTotales: 12,
-      generos: { connect: [{ id: comedia.id }, { id: drama.id }] }
-    }
-  });
-=======
->>>>>>> feature/panel-studio
 
   // Película 1 de Julio
   await prisma.pelicula.create({
