@@ -233,7 +233,6 @@ export default function PaymentForm({ planName, onPaymentSuccess, onCancel }: Pa
 
     setIsProcessing(true);
 
-    // Simulamos un retraso de procesamiento de pago
     setTimeout(() => {
       setIsProcessing(false);
       setIsSuccess(true);

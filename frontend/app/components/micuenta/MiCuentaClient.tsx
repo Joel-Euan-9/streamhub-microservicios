@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Eye, EyeOff, Check, Edit2, X } from "lucide-react";
 import { changePasswordAction, changePlanAction, changeNameAction, verifyPasswordAction } from "@/app/actions/perfil";
 import { logout } from "@/app/actions/auth";
+import PaymentForm from "@/app/components/PaymentForm";
 
 // Define los planes y beneficios
 const PLAN_BENEFITS = {
@@ -65,6 +66,7 @@ export default function MiCuentaClient({ user }: { user: UserProps }) {
   // Modals state
   const [isPasswordModalOpen, setPasswordModalOpen] = useState(false);
   const [isPlanModalOpen, setPlanModalOpen] = useState(false);
+  const [selectedPlanToPay, setSelectedPlanToPay] = useState<string | null>(null);
   
   // Password form state
   const [currentPassword, setCurrentPassword] = useState("");
@@ -150,12 +152,29 @@ export default function MiCuentaClient({ user }: { user: UserProps }) {
   const handleChangePlan = async (newPlan: string) => {
     if (newPlan === currentPlan) return;
     
-    const res = await changePlanAction(newPlan);
+    if (newPlan === "BASIC") {
+      const res = await changePlanAction(newPlan);
+      if (res.success) {
+        setCurrentPlan(res.plan);
+        setPlanModalOpen(false);
+      } else {
+        alert(res.error || "Error al cambiar el plan");
+      }
+    } else {
+      setSelectedPlanToPay(newPlan);
+      setPlanModalOpen(false);
+    }
+  };
+
+  const handlePaymentSuccess = async () => {
+    if (!selectedPlanToPay) return;
+    const res = await changePlanAction(selectedPlanToPay);
     if (res.success) {
       setCurrentPlan(res.plan);
-      setPlanModalOpen(false);
+      setSelectedPlanToPay(null);
     } else {
       alert(res.error || "Error al cambiar el plan");
+      setSelectedPlanToPay(null);
     }
   };
 
@@ -430,6 +449,17 @@ export default function MiCuentaClient({ user }: { user: UserProps }) {
               })}
             </div>
           </div>
+        </div>
+      )}
+
+      {/* --- MODAL DE PAGO --- */}
+      {selectedPlanToPay && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm overflow-y-auto">
+          <PaymentForm 
+            planName={PLAN_BENEFITS[selectedPlanToPay as keyof typeof PLAN_BENEFITS]?.name || selectedPlanToPay}
+            onPaymentSuccess={handlePaymentSuccess}
+            onCancel={() => setSelectedPlanToPay(null)}
+          />
         </div>
       )}
     </div>
