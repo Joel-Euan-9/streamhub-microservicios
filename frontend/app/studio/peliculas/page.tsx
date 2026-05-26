@@ -1,39 +1,12 @@
 import UploadMovieButton from "../components/UploadMovieButton";
 import { Pencil, Trash2 } from "lucide-react";
+import { getStudioMoviesAction } from "@/app/actions/studio";
+import Link from "next/link";
 
-// Datos simulados basados en tu captura de pantalla
-const mockMovies = [
-  {
-    id: 1,
-    title: "Jurassic World: El Reino Caído",
-    genres: ["Aventura", "Sci-Fi"],
-    releaseDate: "22 de Junio, 2018",
-    image: "https://image.tmdb.org/t/p/w500/c9XxwwhHU33KT8Xym9YRs19bA3B.jpg",
-  },
-  {
-    id: 2,
-    title: "Thor: Ragnarok",
-    genres: ["Acción", "Fantasía"],
-    releaseDate: "3 de Noviembre, 2017",
-    image: "https://image.tmdb.org/t/p/w500/rzRwTcFvttce1VKwLyvqpsqDTIz.jpg",
-  },
-  {
-    id: 3,
-    title: "Coco",
-    genres: ["Animación", "Familiar"],
-    releaseDate: "27 de Octubre, 2017",
-    image: "https://image.tmdb.org/t/p/w500/eKi8dIrr8ca28IQZivEza1zRaSA.jpg",
-  },
-  {
-    id: 4,
-    title: "Cómo ser un Latin Lover",
-    genres: ["Comedia"],
-    releaseDate: "28 de Abril, 2017",
-    image: "https://image.tmdb.org/t/p/w500/tS7WkYV6XmQxZ1n0XUaO2s2W8nQ.jpg",
-  },
-];
+export default async function MisPeliculasPage() {
+  const moviesRes = await getStudioMoviesAction();
+  const movies = moviesRes.success ? moviesRes.movies : [];
 
-export default function MisPeliculasPage() {
   return (
     <div className="mx-auto max-w-6xl animate-in fade-in duration-500">
       
@@ -63,7 +36,7 @@ export default function MisPeliculasPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
-              {mockMovies.map((movie) => (
+              {movies.length > 0 ? movies.map((movie: any) => (
                 <tr key={movie.id} className="transition-colors hover:bg-white/[0.02]">
                   {/* Carátula */}
                   <td className="px-6 py-4">
@@ -79,7 +52,7 @@ export default function MisPeliculasPage() {
                     <div className="flex flex-col gap-2">
                       <span className="text-base font-bold text-white">{movie.title}</span>
                       <div className="flex flex-wrap gap-2">
-                        {movie.genres.map((genre) => (
+                        {movie.genres?.map((genre: string) => (
                           <span 
                             key={genre} 
                             className="rounded-full border border-white/10 bg-[#3a86ff]/10 px-2.5 py-0.5 text-xs font-medium text-[#3a86ff]"
@@ -93,7 +66,7 @@ export default function MisPeliculasPage() {
 
                   {/* Lanzamiento */}
                   <td className="px-6 py-4 whitespace-nowrap">
-                    {movie.releaseDate}
+                    {movie.releaseDate ? new Date(movie.releaseDate).toLocaleDateString() : "No especificado"}
                   </td>
 
                   {/* Acciones */}
@@ -114,7 +87,13 @@ export default function MisPeliculasPage() {
                     </div>
                   </td>
                 </tr>
-              ))}
+              )) : (
+                <tr>
+                  <td colSpan={4} className="px-6 py-10 text-center text-gray-500">
+                    No has subido ninguna película todavía.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

@@ -75,6 +75,25 @@ app.get('/api/peliculas', async (req, res) => {
 
 /**
  * @swagger
+ * /api/peliculas:
+ *   post:
+ *     summary: Crea una nueva película
+ *     tags:
+ *       - Catálogo
+ */
+app.post('/api/peliculas', authMiddleware, async (req, res) => {
+  try {
+    const payload = { ...req.body, creadorId: req.user.userId };
+    const resp = await axios.post(`${CATALOG_URL}/peliculas`, payload);
+    res.json(resp.data);
+  } catch (error) {
+    console.error("Error creando pelicula en gateway:", error.message);
+    res.status(500).json({ error: "Error al crear la película" });
+  }
+});
+
+/**
+ * @swagger
  * /api/peliculas/estrenos:
  *   get:
  *     summary: Obtiene el top 10 de películas más recientes
@@ -828,6 +847,95 @@ app.get('/api/canales/usuario/:usuarioId', async (req, res) => {
       return res.status(404).json(error.response.data);
     }
     res.status(500).json({ error: "Error obteniendo canal por usuario" });
+  }
+});
+
+app.get('/api/studio/estadisticas', authMiddleware, async (req, res) => {
+  try {
+    // 1. Obtener películas creadas por el usuario
+    const catResp = await axios.get(`${CATALOG_URL}/peliculas?creadorId=${req.user.userId}`);
+    const movies = catResp.data || [];
+
+    if (movies.length === 0) {
+      return res.json({
+        viewsData: [],
+        approvalData: [
+          { name: "Likes", value: 0, color: "#00f2fe" },
+          { name: "Dislikes", value: 0, color: "#3a86ff" }
+        ],
+        topMovies: []
+      });
+    }
+
+    const movieIds = movies.map(m => m.id);
+
+    // 2. Aprobación Global y Top Películas
+    let totalLikes = 0;
+    let totalDislikes = 0;
+
+    movies.forEach(m => {
+      totalLikes += (m.likesTotales || 0);
+      totalDislikes += (m.dislikesTotales || 0);
+    });
+
+    const approvalData = [
+      { name: "Likes", value: totalLikes, color: "#00f2fe" },
+      { name: "Dislikes", value: totalDislikes, color: "#3a86ff" }
+    ];
+
+    // Ordenar por vistasTotales descendente y tomar top 4
+    const topMovies = [...movies]
+      .sort((a, b) => (b.vistasTotales || 0) - (a.vistasTotales || 0))
+      .slice(0, 4)
+      .map(m => ({
+        id: m.id,
+        title: m.titulo,
+        vistas: m.vistasTotales || 0,
+        tendencia: "+5%" // Mock simplificado
+      }));
+
+    // 3. Obtener vistas mensuales
+    const viewsResp = await axios.post(`${INTERACTIONS_URL}/vistas/mensual/batch`, { peliculaIds: movieIds });
+    const registrosMensuales = viewsResp.data || [];
+
+    // Agrupar vistas por mes
+    const mesNombres = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+    const vistasPorMes = {};
+    
+    // Inicializar últimos 6 meses en 0 para asegurar que la gráfica siempre muestre datos
+    const fechaActual = new Date();
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(fechaActual.getFullYear(), fechaActual.getMonth() - i, 1);
+      const clave = `${d.getFullYear()}-${d.getMonth() + 1}`;
+      vistasPorMes[clave] = {
+        name: mesNombres[d.getMonth()],
+        vistas: 0,
+        anio: d.getFullYear(),
+        mesNum: d.getMonth() + 1
+      };
+    }
+
+    registrosMensuales.forEach(reg => {
+      const clave = `${reg.anio}-${reg.mes}`;
+      if (vistasPorMes[clave]) {
+        vistasPorMes[clave].vistas += reg.cantidadVistas;
+      }
+    });
+
+    const viewsData = Object.values(vistasPorMes).sort((a, b) => {
+      if (a.anio !== b.anio) return a.anio - b.anio;
+      return a.mesNum - b.mesNum;
+    });
+
+    res.json({
+      viewsData,
+      approvalData,
+      topMovies
+    });
+
+  } catch (error) {
+    console.error("Error al obtener estadísticas de studio:", error.message);
+    res.status(500).json({ error: "Error al obtener estadísticas" });
   }
 });
 

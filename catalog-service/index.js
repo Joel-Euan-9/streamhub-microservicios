@@ -132,6 +132,49 @@ app.post('/peliculas/batch', async (req, res) => {
   }
 });
 
+app.post('/peliculas', async (req, res) => {
+  const { 
+    titulo, descripcion, fechaLanzamiento, duracion, 
+    rutaCaratula, rutaVideo, rutaImagenFondo, rutaTrailer, 
+    creadorId, generos 
+  } = req.body;
+
+  try {
+    let generosConnect = [];
+    if (generos && Array.isArray(generos)) {
+      for (const nombreGenero of generos) {
+        let gen = await prisma.genero.findFirst({ where: { nombre: nombreGenero } });
+        if (!gen) {
+          gen = await prisma.genero.create({ data: { nombre: nombreGenero } });
+        }
+        generosConnect.push({ id: gen.id });
+      }
+    }
+
+    const nuevaPelicula = await prisma.pelicula.create({
+      data: {
+        titulo,
+        descripcion: descripcion || "Sin descripción",
+        fechaLanzamiento: fechaLanzamiento ? new Date(fechaLanzamiento) : new Date(),
+        duracion: parseInt(duracion) || 0,
+        rutaCaratula: rutaCaratula || "https://i.ibb.co/6gGkFfT/placeholder.png",
+        rutaVideo: rutaVideo || "",
+        rutaImagenFondo: rutaImagenFondo || "https://i.ibb.co/6gGkFfT/placeholder.png",
+        rutaTrailer: rutaTrailer || "",
+        creadorId,
+        tipoContenido: "TERCEROS",
+        generos: {
+          connect: generosConnect
+        }
+      }
+    });
+    res.status(201).json(nuevaPelicula);
+  } catch (error) {
+    console.error("Error al crear película:", error);
+    res.status(500).json({ error: "Error al crear película" });
+  }
+});
+
 // 3. RUTAS DINÁMICAS (Parámetros con :) - SIEMPRE AL FINAL
 app.get('/peliculas/:id', async (req, res) => {
   try {

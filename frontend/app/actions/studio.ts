@@ -43,13 +43,113 @@ export async function getStudioMoviesAction() {
       title: m.titulo,
       image: m.rutaCaratula,
       creadorId: m.creadorId,
-      commentsCount: countsMap[m.id] || 0
+      commentsCount: countsMap[m.id] || 0,
+      releaseDate: m.fechaLanzamiento || "",
+      genres: m.generos ? m.generos.map((g: any) => g.nombre) : []
     }));
 
     return { success: true, movies: enrichedMovies, profile };
   } catch (error) {
     console.error("Error en getStudioMoviesAction:", error);
     return { success: false, error: "Error de conexión", movies: [], profile: null };
+  }
+}
+
+export async function getStudioSummaryAction() {
+  try {
+    const profile = await getUserProfile();
+    if (!profile || profile.plan !== 'STUDIO') {
+      return { success: false, error: "No autorizado" };
+    }
+
+    // Obtener las películas creadas por este usuario
+    const resMovies = await fetchWithAuth(`http://gateway-service:8000/api/peliculas?creadorId=${profile.id}`, {
+      cache: "no-store"
+    });
+
+    let movies = [];
+    if (resMovies.ok) {
+      movies = await resMovies.json();
+    }
+
+    const activeMovies = movies.length;
+    const totalViews = movies.reduce((sum: number, m: any) => sum + (m.vistasTotales || 0), 0);
+
+    // Obtener transacciones para ganancias del mes
+    const resTrans = await fetchWithAuth(`http://gateway-service:8000/api/perfil/transacciones`, {
+      cache: "no-store"
+    });
+    
+    let earnings = 0;
+    if (resTrans.ok) {
+      const transacciones = await resTrans.json();
+      const now = new Date();
+      earnings = transacciones.reduce((sum: number, t: any) => {
+        const tDate = new Date(t.fecha);
+        if (tDate.getMonth() === now.getMonth() && tDate.getFullYear() === now.getFullYear() && t.monto > 0) {
+          return sum + t.monto;
+        }
+        return sum;
+      }, 0);
+    }
+
+    return {
+      success: true,
+      data: {
+        earnings,
+        totalViews,
+        activeMovies
+      }
+    };
+  } catch (error) {
+    console.error("Error en getStudioSummaryAction:", error);
+    return { success: false, error: "Error al obtener resumen" };
+  }
+}
+
+export async function getStudioEstadisticasAction() {
+  try {
+    const profile = await getUserProfile();
+    if (!profile || profile.plan !== 'STUDIO') {
+      return { success: false, error: "No autorizado" };
+    }
+
+    const res = await fetchWithAuth(`http://gateway-service:8000/api/studio/estadisticas`, {
+      cache: "no-store"
+    });
+
+    if (!res.ok) {
+      return { success: false, error: "Error al obtener estadísticas" };
+    }
+
+    const data = await res.json();
+    return { success: true, data };
+  } catch (error) {
+    console.error("Error en getStudioEstadisticasAction:", error);
+    return { success: false, error: "Error de servidor" };
+  }
+}
+
+export async function uploadStudioMovieAction(data: any) {
+  try {
+    const res = await fetchWithAuth(`http://gateway-service:8000/api/peliculas`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+    
+    if (!res.ok) {
+      const text = await res.text();
+      console.error("Error response from gateway:", res.status, text);
+      return { success: false, error: "Error al subir película" };
+    }
+    
+    const movie = await res.json();
+    revalidatePath("/studio/peliculas");
+    revalidatePath("/studio");
+    return { success: true, movie };
+  } catch (error) {
+    console.error("Error en uploadStudioMovieAction:", error);
+    return { success: false, error: "Error de conexión" };
   }
 }
 

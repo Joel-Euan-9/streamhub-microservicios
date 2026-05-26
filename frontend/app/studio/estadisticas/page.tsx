@@ -6,31 +6,56 @@ import {
 } from "recharts";
 import { TrendingUp, Activity, ThumbsUp, BarChart2 } from "lucide-react";
 
-// Mock Data basada en "RegistroVistaMensual" (Interactions Service)
-const viewsData = [
-  { name: "Ene", vistas: 1200 },
-  { name: "Feb", vistas: 1900 },
-  { name: "Mar", vistas: 3000 },
-  { name: "Abr", vistas: 5800 },
-  { name: "May", vistas: 7200 },
-  { name: "Jun", vistas: 12540 },
+import { useEffect, useState } from "react";
+import { getStudioEstadisticasAction } from "@/app/actions/studio";
+
+// Data de fallback temporal mientras carga
+const defaultViewsData = [
+  { name: "Ene", vistas: 0 },
+  { name: "Feb", vistas: 0 },
+  { name: "Mar", vistas: 0 },
+  { name: "Abr", vistas: 0 },
+  { name: "May", vistas: 0 },
+  { name: "Jun", vistas: 0 },
 ];
 
-// Mock Data basada en likes/dislikes (Catalog Service)
-const approvalData = [
-  { name: "Likes", value: 850, color: "#00f2fe" },    // Cyan
-  { name: "Dislikes", value: 150, color: "#3a86ff" }, // Blue
-];
-
-// Mock Data de Top Películas
-const topMovies = [
-  { id: 1, title: "Thor: Ragnarok", vistas: 5400, tendencia: "+12%" },
-  { id: 2, title: "Coco", vistas: 4200, tendencia: "+8%" },
-  { id: 3, title: "Jurassic World", vistas: 2100, tendencia: "+2%" },
-  { id: 4, title: "Cómo ser un Latin Lover", vistas: 840, tendencia: "-1%" },
+const defaultApprovalData = [
+  { name: "Likes", value: 0, color: "#00f2fe" },
+  { name: "Dislikes", value: 0, color: "#3a86ff" },
 ];
 
 export default function EstadisticasPage() {
+  const [viewsData, setViewsData] = useState<any[]>(defaultViewsData);
+  const [approvalData, setApprovalData] = useState<any[]>(defaultApprovalData);
+  const [topMovies, setTopMovies] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadData() {
+      const result = await getStudioEstadisticasAction();
+      if (result.success && result.data) {
+        if (result.data.viewsData?.length > 0) setViewsData(result.data.viewsData);
+        if (result.data.approvalData?.length > 0) setApprovalData(result.data.approvalData);
+        if (result.data.topMovies?.length > 0) setTopMovies(result.data.topMovies);
+      }
+      setLoading(false);
+    }
+    loadData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex h-64 items-center justify-center animate-in fade-in">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-[#00f2fe] border-t-transparent"></div>
+      </div>
+    );
+  }
+
+  // Calcular tendencia global (mock para frontend)
+  const totalViews = viewsData.reduce((acc, curr) => acc + curr.vistas, 0);
+  const lastMonthViews = viewsData[viewsData.length - 1]?.vistas || 0;
+  const globalTendency = totalViews > 0 && lastMonthViews > 0 ? "+15.3%" : "0%";
+
   return (
     <div className="mx-auto max-w-6xl animate-in fade-in duration-500">
       
@@ -56,7 +81,7 @@ export default function EstadisticasPage() {
               <p className="text-sm text-[#aeb4c0]">Crecimiento en los últimos 6 meses</p>
             </div>
             <div className="flex items-center gap-2 rounded-full bg-[#00f2fe]/10 px-4 py-1.5 text-sm font-bold text-[#00f2fe]">
-              <TrendingUp size={16} /> +15.3%
+              <TrendingUp size={16} /> {globalTendency}
             </div>
           </div>
           

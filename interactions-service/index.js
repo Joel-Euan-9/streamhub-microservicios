@@ -211,6 +211,50 @@ app.get('/interaccion/status/:peliculaId/:usuarioId', async (req, res) => {
   }
 });
 
+// --- RUTAS DE VISTAS MENSUALES ---
+
+// Registrar una vista mensual
+app.post('/vistas/mensual', async (req, res) => {
+  const { peliculaId } = req.body;
+  if (!peliculaId) return res.status(400).json({ error: "Falta peliculaId" });
+  
+  const fecha = new Date();
+  const mes = fecha.getMonth() + 1; // 1 al 12
+  const anio = fecha.getFullYear();
+
+  try {
+    const registro = await prisma.registroVistaMensual.upsert({
+      where: {
+        peliculaId_mes_anio: { peliculaId, mes, anio }
+      },
+      update: { cantidadVistas: { increment: 1 } },
+      create: { peliculaId, mes, anio, cantidadVistas: 1 }
+    });
+    res.json(registro);
+  } catch (error) {
+    console.error("Error al registrar vista mensual:", error);
+    res.status(500).json({ error: "Error al registrar vista mensual" });
+  }
+});
+
+// Consultar vistas mensuales por lote de películas
+app.post('/vistas/mensual/batch', async (req, res) => {
+  const { peliculaIds } = req.body;
+  if (!peliculaIds || !Array.isArray(peliculaIds)) {
+    return res.status(400).json({ error: "peliculaIds debe ser un arreglo" });
+  }
+
+  try {
+    const registros = await prisma.registroVistaMensual.findMany({
+      where: { peliculaId: { in: peliculaIds } }
+    });
+    res.json(registros);
+  } catch (error) {
+    console.error("Error al consultar vistas mensuales en lote:", error);
+    res.status(500).json({ error: "Error al consultar vistas mensuales" });
+  }
+});
+
 const PORT = process.env.PORT || 8000;
 app.listen(PORT, () => {
   console.log(`Interactions Service corriendo en el puerto ${PORT}`);

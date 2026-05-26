@@ -1,7 +1,11 @@
 import { DollarSign, Eye, Film, Bell, CheckCircle2, TrendingUp, BarChart2 } from "lucide-react";
 import UploadMovieButton from "./components/UploadMovieButton";
+import { getStudioSummaryAction } from "@/app/actions/studio";
 
-export default function StudioResumenPage() {
+export default async function StudioResumenPage() {
+  const summaryRes = await getStudioSummaryAction();
+  const summary = summaryRes.success && summaryRes.data ? summaryRes.data : { earnings: 0, totalViews: 0, activeMovies: 0 };
+
   return (
     <div className="mx-auto max-w-6xl animate-in fade-in duration-500">
       
@@ -29,7 +33,7 @@ export default function StudioResumenPage() {
             </div>
             <div>
               <p className="text-sm font-medium text-[#aeb4c0]">Ganancias Estimadas (Mes)</p>
-              <h3 className="text-2xl font-bold text-white">$450.00 <span className="text-xs font-normal text-green-400 ml-1">+12%</span></h3>
+              <h3 className="text-2xl font-bold text-white">${summary.earnings.toFixed(2)} MXN</h3>
             </div>
           </div>
         </div>
@@ -42,8 +46,8 @@ export default function StudioResumenPage() {
               <Eye size={24} />
             </div>
             <div>
-              <p className="text-sm font-medium text-[#aeb4c0]">Vistas Totales (30 días)</p>
-              <h3 className="text-2xl font-bold text-white">12,540 <span className="text-xs font-normal text-green-400 ml-1">+5.2%</span></h3>
+              <p className="text-sm font-medium text-[#aeb4c0]">Vistas Totales</p>
+              <h3 className="text-2xl font-bold text-white">{summary.totalViews.toLocaleString()}</h3>
             </div>
           </div>
         </div>
@@ -57,7 +61,7 @@ export default function StudioResumenPage() {
             </div>
             <div>
               <p className="text-sm font-medium text-[#aeb4c0]">Películas Activas</p>
-              <h3 className="text-2xl font-bold text-white">4</h3>
+              <h3 className="text-2xl font-bold text-white">{summary.activeMovies}</h3>
             </div>
           </div>
         </div>

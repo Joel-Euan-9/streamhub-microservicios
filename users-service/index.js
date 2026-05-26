@@ -33,6 +33,14 @@ app.post('/historial', async (req, res) => {
       markMonetizada = true;
       
       try {
+        // Registrar vista en catálogo y en interacciones mensuales
+        try {
+          await axios.patch(`http://catalog-service:8000/peliculas/${peliculaId}/estadisticas`, { tipo: 'VISTA' });
+          await axios.post(`http://interactions-service:8000/vistas/mensual`, { peliculaId });
+        } catch (vErr) {
+          console.error("Error al registrar vista:", vErr.message);
+        }
+
         // Obtener detalles de la película desde el catalog-service
         const catResp = await axios.get(`http://catalog-service:8000/peliculas/${peliculaId}`);
         const movie = catResp.data;
