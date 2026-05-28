@@ -9,7 +9,9 @@ import {
   Sparkles, 
   CircleUser, 
   Film,
-  UserCheck
+  UserCheck,
+  CheckCircle2,
+  AlertCircle
 } from "lucide-react";
 import { getStudioMoviesAction } from "@/app/actions/studio";
 import { getMovieComments, addMovieComment } from "@/app/actions/comments";
@@ -55,6 +57,12 @@ export default function FeedbackPage() {
   const [creatorProfile, setCreatorProfile] = useState<UserProfile | null>(null);
   const [selectedMovieId, setSelectedMovieId] = useState<string | null>(null);
   const [comments, setComments] = useState<MovieComment[]>([]);
+  const [toast, setToast] = useState<{ message: string, type: "success" | "error" } | null>(null);
+
+  const showToast = (message: string, type: "success" | "error") => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
   
   const [moviesLoading, setMoviesLoading] = useState(true);
   const [commentsLoading, setCommentsLoading] = useState(false);
@@ -121,11 +129,12 @@ export default function FeedbackPage() {
       if (res.success) {
         setReplyText("");
         setReplyingToCommentId(null);
+        showToast("Respuesta publicada exitosamente", "success");
         await loadComments(selectedMovieId);
         // Actualizar el conteo de la izquierda silenciosamente
         await loadStudioMovies(false);
       } else {
-        alert(res.error || "Error al responder.");
+        showToast(res.error || "Error al responder.", "error");
       }
     } catch (err) {
       console.error(err);
@@ -143,11 +152,12 @@ export default function FeedbackPage() {
       const res = await addMovieComment(selectedMovieId, generalText);
       if (res.success) {
         setGeneralText("");
+        showToast("Comentario publicado exitosamente", "success");
         await loadComments(selectedMovieId);
         // Actualizar el conteo de la izquierda silenciosamente
         await loadStudioMovies(false);
       } else {
-        alert(res.error || "Error al publicar comentario.");
+        showToast(res.error || "Error al publicar comentario.", "error");
       }
     } catch (err) {
       console.error(err);
@@ -524,6 +534,14 @@ export default function FeedbackPage() {
         </div>
 
       </div>
+      {toast && (
+        <div className={`fixed bottom-10 left-1/2 -translate-x-1/2 z-[110] px-6 py-3 rounded-full shadow-2xl animate-bounce backdrop-blur-md border font-semibold flex items-center gap-2 ${
+          toast.type === 'success' ? 'bg-[#00f2fe]/20 border-[#00f2fe]/50 text-[#00f2fe]' : 'bg-red-500/20 border-red-500/50 text-red-500'
+        }`}>
+          {toast.type === 'success' ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
+          {toast.message}
+        </div>
+      )}
     </div>
   );
 }

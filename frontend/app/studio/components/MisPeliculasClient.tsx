@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Pencil, Trash2, X, AlertTriangle } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Pencil, Trash2, X, AlertTriangle, CheckCircle2, AlertCircle } from "lucide-react";
 import { updateStudioMovieAction, deleteStudioMovieAction } from "@/app/actions/studio";
 import { useRouter } from "next/navigation";
 
@@ -25,9 +25,34 @@ const GENEROS = [
   "Comedia", "Drama", "Terror",
 ];
 
+const formatDateUTC = (dateStr: string) => {
+  if (!dateStr) return "No especificado";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr.slice(0, 10))) {
+    const parts = dateStr.slice(0, 10).split("-");
+    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  }
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return "No especificado";
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(date.getUTCDate()).padStart(2, '0');
+  return `${day}/${month}/${year}`;
+};
+
+
 export default function MisPeliculasClient({ movies: initialMovies }: { movies: Movie[] }) {
   const router = useRouter();
   const [movies, setMovies] = useState(initialMovies);
+  const [toast, setToast] = useState<{ message: string, type: "success" | "error" } | null>(null);
+
+  const showToast = (message: string, type: "success" | "error") => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  useEffect(() => {
+    setMovies(initialMovies);
+  }, [initialMovies]);
 
   // ── Edit modal state ──────────────────────────────────────────
   const [editMovie, setEditMovie] = useState<Movie | null>(null);
@@ -76,15 +101,29 @@ export default function MisPeliculasClient({ movies: initialMovies }: { movies: 
 
   const handleEditSubmit = async () => {
     if (!editMovie) return;
-    if (!editForm.titulo) { alert("El título es requerido"); return; }
+    if (!editForm.titulo) { showToast("El título es requerido", "error"); return; }
     setIsEditing(true);
     const res = await updateStudioMovieAction(editMovie.id, editForm);
     setIsEditing(false);
     if (res.success) {
+      setMovies(prev => prev.map(m => m.id === editMovie.id ? {
+        ...m,
+        title: editForm.titulo,
+        image: editForm.rutaCaratula || m.image,
+        releaseDate: editForm.fechaLanzamiento,
+        genres: editForm.generos,
+        descripcion: editForm.descripcion,
+        duracion: editForm.duracion,
+        rutaCaratula: editForm.rutaCaratula,
+        rutaImagenFondo: editForm.rutaImagenFondo,
+        rutaVideo: editForm.rutaVideo,
+        rutaTrailer: editForm.rutaTrailer,
+      } : m));
       setEditMovie(null);
+      showToast("Película actualizada exitosamente", "success");
       router.refresh();
     } else {
-      alert(res.error || "Error al actualizar la película");
+      showToast(res.error || "Error al actualizar la película", "error");
     }
   };
 
@@ -97,9 +136,10 @@ export default function MisPeliculasClient({ movies: initialMovies }: { movies: 
     if (res.success) {
       setMovies(prev => prev.filter(m => m.id !== deleteMovie.id));
       setDeleteMovie(null);
+      showToast("Película eliminada exitosamente", "success");
       router.refresh();
     } else {
-      alert(res.error || "Error al eliminar la película");
+      showToast(res.error || "Error al eliminar la película", "error");
     }
   };
 
@@ -143,9 +183,7 @@ export default function MisPeliculasClient({ movies: initialMovies }: { movies: 
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    {movie.releaseDate
-                      ? new Date(movie.releaseDate).toLocaleDateString()
-                      : "No especificado"}
+                    {formatDateUTC(movie.releaseDate)}
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-3">
@@ -361,6 +399,14 @@ export default function MisPeliculasClient({ movies: initialMovies }: { movies: 
             </div>
 
           </div>
+        </div>
+      )}
+      {toast && (
+        <div className={`fixed bottom-10 left-1/2 -translate-x-1/2 z-[110] px-6 py-3 rounded-full shadow-2xl animate-bounce backdrop-blur-md border font-semibold flex items-center gap-2 ${
+          toast.type === 'success' ? 'bg-[#00f2fe]/20 border-[#00f2fe]/50 text-[#00f2fe]' : 'bg-red-500/20 border-red-500/50 text-red-500'
+        }`}>
+          {toast.type === 'success' ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
+          {toast.message}
         </div>
       )}
     </>

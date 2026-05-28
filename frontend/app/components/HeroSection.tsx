@@ -62,15 +62,6 @@ export default function HeroSection({ peliculas }: Props) {
           <a href="/login" className="block text-center py-4 px-5 rounded font-semibold text-lg bg-white text-[#0b0c15] hover:bg-gray-200">
             Iniciar sesión
           </a>
-          <a href="/register" className="block text-center py-4 px-5 rounded font-semibold text-lg bg-white text-[#0b0c15] hover:bg-gray-200">
-            Empieza tu periodo de prueba gratis*
-          </a>
-        </div>
-
-        <div className="space-y-3">
-          <p className="text-xs md:text-sm leading-relaxed max-w-[550px] text-gray-400">
-            * Solo se aplica con una tarjeta de crédito o débito. Cancela cuando quieras.
-          </p>
         </div>
       </div>
 

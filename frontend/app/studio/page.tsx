@@ -1,10 +1,13 @@
-import { DollarSign, Eye, Film, Bell, CheckCircle2, TrendingUp, BarChart2 } from "lucide-react";
+import { DollarSign, Eye, Film, Bell, CheckCircle2, TrendingUp, BarChart2, MessageSquare } from "lucide-react";
 import UploadMovieButton from "./components/UploadMovieButton";
-import { getStudioSummaryAction } from "@/app/actions/studio";
+import { getStudioSummaryAction, getStudioNotificationsAction } from "@/app/actions/studio";
 
 export default async function StudioResumenPage() {
   const summaryRes = await getStudioSummaryAction();
   const summary = summaryRes.success && summaryRes.data ? summaryRes.data : { earnings: 0, totalViews: 0, activeMovies: 0 };
+
+  const notificationsRes = await getStudioNotificationsAction();
+  const notifications = notificationsRes.success && notificationsRes.notifications ? notificationsRes.notifications : [];
 
   return (
     <div className="mx-auto max-w-6xl animate-in fade-in duration-500">
@@ -75,28 +78,41 @@ export default async function StudioResumenPage() {
             <Bell className="text-[#aeb4c0]" size={20} />
             <h2 className="text-lg font-bold text-white">Notificaciones</h2>
           </div>
-          <div className="space-y-4">
-            <div className="flex items-start gap-4 rounded-xl bg-white/5 p-4">
-              <CheckCircle2 className="mt-0.5 shrink-0 text-green-400" size={18} />
-              <div>
-                <p className="text-sm font-medium text-white">Tu película "Hotel Transilvania 3" fue aprobada.</p>
-                <p className="mt-1 text-xs text-[#aeb4c0]">Hace 2 horas</p>
+          <div className="space-y-4 max-h-[380px] overflow-y-auto pr-2 custom-scrollbar">
+            {notifications.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-8 text-center">
+                <Bell className="text-white/20 mb-2" size={32} />
+                <p className="text-sm text-[#aeb4c0]">No tienes notificaciones recientes.</p>
               </div>
-            </div>
-            <div className="flex items-start gap-4 rounded-xl bg-white/5 p-4">
-              <DollarSign className="mt-0.5 shrink-0 text-[#00f2fe]" size={18} />
-              <div>
-                <p className="text-sm font-medium text-white">Has recibido un pago de comisiones ($150.00).</p>
-                <p className="mt-1 text-xs text-[#aeb4c0]">Ayer</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-4 rounded-xl bg-white/5 p-4">
-              <TrendingUp className="mt-0.5 shrink-0 text-[#3a86ff]" size={18} />
-              <div>
-                <p className="text-sm font-medium text-white">"Coco" está en tendencia en tu región.</p>
-                <p className="mt-1 text-xs text-[#aeb4c0]">Hace 2 días</p>
-              </div>
-            </div>
+            ) : (
+              notifications.map((notif: any) => {
+                let Icon = Bell;
+                let colorClass = "text-[#aeb4c0] bg-white/5";
+                
+                if (notif.type === 'commission') {
+                  Icon = DollarSign;
+                  colorClass = "text-[#00f2fe] bg-[#00f2fe]/10";
+                } else if (notif.type === 'withdrawal') {
+                  Icon = CheckCircle2;
+                  colorClass = "text-red-400 bg-red-400/10";
+                } else if (notif.type === 'comment') {
+                  Icon = MessageSquare;
+                  colorClass = "text-[#3a86ff] bg-[#3a86ff]/10";
+                }
+
+                return (
+                  <div key={notif.id} className="flex items-start gap-4 rounded-xl bg-white/5 p-4 border border-white/5 transition hover:bg-white/10">
+                    <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${colorClass}`}>
+                      <Icon size={18} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-white leading-normal break-words">{notif.description}</p>
+                      <p className="mt-1 text-xs text-[#aeb4c0]">{notif.timeAgo}</p>
+                    </div>
+                  </div>
+                );
+              })
+            )}
           </div>
         </div>
 
