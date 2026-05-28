@@ -242,4 +242,70 @@ app.patch('/peliculas/:id/estadisticas/diff', async (req, res) => {
   }
 });
 
+app.put('/peliculas/:id', async (req, res) => {
+  const { id } = req.params;
+  const {
+    titulo, descripcion, fechaLanzamiento, duracion,
+    rutaCaratula, rutaVideo, rutaImagenFondo, rutaTrailer,
+    generos
+  } = req.body;
+
+  try {
+    // Sincronizar géneros: desconectar todos y reconectar los nuevos
+    let generosConnect = [];
+    if (generos && Array.isArray(generos)) {
+      for (const nombreGenero of generos) {
+        let gen = await prisma.genero.findFirst({ where: { nombre: nombreGenero } });
+        if (!gen) {
+          gen = await prisma.genero.create({ data: { nombre: nombreGenero } });
+        }
+        generosConnect.push({ id: gen.id });
+      }
+    }
+
+    const peliculaActualizada = await prisma.pelicula.update({
+      where: { id },
+      data: {
+        ...(titulo !== undefined && { titulo }),
+        ...(descripcion !== undefined && { descripcion }),
+        // Solo actualizar fecha si viene un string no vacío para evitar new Date("") inválido
+        ...(fechaLanzamiento !== undefined && fechaLanzamiento !== '' && { fechaLanzamiento: new Date(fechaLanzamiento) }),
+        ...(duracion !== undefined && { duracion: parseInt(duracion) || 0 }),
+        ...(rutaCaratula !== undefined && { rutaCaratula }),
+        ...(rutaVideo !== undefined && { rutaVideo }),
+        ...(rutaImagenFondo !== undefined && { rutaImagenFondo }),
+        ...(rutaTrailer !== undefined && { rutaTrailer }),
+        ...(generos !== undefined && {
+          generos: {
+            set: [],               // desconectar todos los actuales
+            connect: generosConnect // conectar los nuevos
+          }
+        }),
+      },
+      include: { generos: true }
+    });
+
+    res.json(peliculaActualizada);
+  } catch (error) {
+    console.error("Error al actualizar película:", error);
+    res.status(500).json({ error: "Error al actualizar película" });
+  }
+});
+
+app.delete('/peliculas/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    // Desconectar géneros primero para evitar errores de constraint en la tabla pivot
+    await prisma.pelicula.update({
+      where: { id },
+      data: { generos: { set: [] } }
+    });
+    await prisma.pelicula.delete({ where: { id } });
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Error al eliminar película:", error);
+    res.status(500).json({ error: "Error al eliminar película" });
+  }
+});
+
 app.listen(8000, () => console.log('Catalog Service running on port 8000'));
