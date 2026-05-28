@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { fetchWithAuth } from "@/lib/api";
 import { getUserProfile } from "./profile";
 
@@ -45,7 +46,14 @@ export async function getStudioMoviesAction() {
       creadorId: m.creadorId,
       commentsCount: countsMap[m.id] || 0,
       releaseDate: m.fechaLanzamiento || "",
-      genres: m.generos ? m.generos.map((g: any) => g.nombre) : []
+      genres: m.generos ? m.generos.map((g: any) => g.nombre) : [],
+      // raw fields needed for the edit modal
+      descripcion: m.descripcion || "",
+      duracion: m.duracion ? String(m.duracion) : "",
+      rutaCaratula: m.rutaCaratula || "",
+      rutaImagenFondo: m.rutaImagenFondo || "",
+      rutaVideo: m.rutaVideo || "",
+      rutaTrailer: m.rutaTrailer || "",
     }));
 
     return { success: true, movies: enrichedMovies, profile };
@@ -153,7 +161,49 @@ export async function uploadStudioMovieAction(data: any) {
   }
 }
 
-import { revalidatePath } from "next/cache";
+export async function updateStudioMovieAction(id: string, data: any) {
+  try {
+    const res = await fetchWithAuth(`http://gateway-service:8000/api/peliculas/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      console.error("Error response from gateway:", res.status, text);
+      return { success: false, error: "Error al actualizar película" };
+    }
+
+    const movie = await res.json();
+    revalidatePath("/studio/peliculas");
+    revalidatePath("/studio");
+    return { success: true, movie };
+  } catch (error) {
+    console.error("Error en updateStudioMovieAction:", error);
+    return { success: false, error: "Error de conexión" };
+  }
+}
+
+export async function deleteStudioMovieAction(id: string) {
+  try {
+    const res = await fetchWithAuth(`http://gateway-service:8000/api/peliculas/${id}`, {
+      method: "DELETE",
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      console.error("Error response from gateway:", res.status, text);
+      return { success: false, error: "Error al eliminar película" };
+    }
+
+    revalidatePath("/studio/peliculas");
+    revalidatePath("/studio");
+    return { success: true };
+  } catch (error) {
+    console.error("Error en deleteStudioMovieAction:", error);
+    return { success: false, error: "Error de conexión" };
+  }
+}
 
 // Obtener la configuración del perfil del usuario logueado (si es STUDIO)
 export async function getStudioProfileAction() {

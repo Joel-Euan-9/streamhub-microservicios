@@ -174,6 +174,70 @@ app.get('/api/peliculas/:id', async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/peliculas/{id}:
+ *   put:
+ *     summary: Actualiza una película existente del creador autenticado
+ *     tags:
+ *       - Catálogo
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Película actualizada con éxito
+ *       403:
+ *         description: No autorizado
+ */
+app.put('/api/peliculas/:id', authMiddleware, async (req, res) => {
+  try {
+    const resp = await axios.put(`${CATALOG_URL}/peliculas/${req.params.id}`, req.body);
+    res.json(resp.data);
+  } catch (error) {
+    console.error("Error al actualizar película en gateway:", error.message);
+    if (error.response) {
+      return res.status(error.response.status).json(error.response.data);
+    }
+    res.status(500).json({ error: "Error al actualizar la película" });
+  }
+});
+
+/**
+ * @swagger
+ * /api/peliculas/{id}:
+ *   delete:
+ *     summary: Elimina una película del creador autenticado
+ *     tags:
+ *       - Catálogo
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Película eliminada con éxito
+ *       403:
+ *         description: No autorizado
+ */
+app.delete('/api/peliculas/:id', authMiddleware, async (req, res) => {
+  try {
+    const resp = await axios.delete(`${CATALOG_URL}/peliculas/${req.params.id}`);
+    res.json(resp.data);
+  } catch (error) {
+    console.error("Error al eliminar película en gateway:", error.message);
+    if (error.response) {
+      return res.status(error.response.status).json(error.response.data);
+    }
+    res.status(500).json({ error: "Error al eliminar la película" });
+  }
+});
+
 
 /**
  * @swagger
