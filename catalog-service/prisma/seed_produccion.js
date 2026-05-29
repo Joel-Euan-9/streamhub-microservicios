@@ -32,12 +32,13 @@ async function main() {
   const documental = await prisma.genero.create({ data: { nombre: 'Documental' } }); // Agregado para los creadores
   const suspenso = await prisma.genero.create({ data: { nombre: 'Suspenso' } });
 
-  // --- 3. CREAR PELÍCULAS ORIGINALES DE LA PLATAFORMA ---
-  console.log('   🎬 Creando las 20 películas originales...');
+  // --- 3. CREAR PELÍCULAS DE LA PLATAFORMA ---
+  console.log('   🎬 Creando las películas de producción...');
 
   await prisma.pelicula.create({
     data: {
-      titulo: 'Burlesque on Car Men ',
+      id: '11aa11aa-11aa-11aa-11aa-11aa11aa11aa',
+      titulo: 'Burlesque on Car Men',
       descripcion: 'Una seductora gitana es enviada a consentir a un oficial bofado para permitir una carrera de contrabando.',
       fechaLanzamiento: new Date('1915-12-18'),
       duracion: 37,
@@ -47,14 +48,15 @@ async function main() {
       rutaTrailer: 'https://youtu.be/0RfS1b-QRZk?si=oA5tL4RXhkasFlkI',
       requierePremium: false,
       tipoContenido: 'ORIGINAL',
-      vistasTotales: 10000, likesTotales: 2000, dislikesTotales: 15,
-      generos: { connect: [{id:comedia.id}] }
+      vistasTotales: 1250, likesTotales: 300, dislikesTotales: 5,
+      generos: { connect: [{ id: comedia.id }] }
     }
   });
 
-   await prisma.pelicula.create({
+  await prisma.pelicula.create({
     data: {
-      titulo: ' Jack and the Beanstalk',
+      id: '22bb22bb-22bb-22bb-22bb-22bb22bb22bb',
+      titulo: 'Jack and the Beanstalk',
       descripcion: 'Jack y las habichuelas mágicas es un cuento inglés de tradición oral, convertido en mito universal, ​que sigue inspirando ediciones, espectáculos de teatro y películas de cine.',
       fechaLanzamiento: new Date('2010-05-20'),
       duracion: 121,
@@ -64,15 +66,16 @@ async function main() {
       rutaTrailer: 'https://youtu.be/IsUvHKwTZkQ?si=p9uaDWe618_X-FiP',
       requierePremium: false,
       tipoContenido: 'ORIGINAL',
-      vistasTotales: 10000, likesTotales: 2000, dislikesTotales: 15,
-      generos: { connect: [{id:aventura.id}, {id:accion.id}] }
+      vistasTotales: 4200, likesTotales: 980, dislikesTotales: 14,
+      generos: { connect: [{ id: aventura.id }, { id: accion.id }] }
     }
   });
 
 
   await prisma.pelicula.create({
     data: {
-      titulo: ' guliver’s travels',
+      id: '33cc33cc-33cc-33cc-33cc-33cc33cc33cc',
+      titulo: 'guliver’s travels',
       descripcion: 'Gulliver’s Travels es una película de animación de 1939 dirigida por Rob Letterman y protagonizada por Jack Black, Jason Segel, Emily Blunt y Amanda Peet. La película es una adaptación libre de la novela homónima de Jonathan Swift, que sigue las aventuras del personaje principal, Lemuel Gulliver, mientras viaja a diferentes lugares fantásticos.',
       fechaLanzamiento: new Date('1939-05-20'),
       duracion: 121,
@@ -82,14 +85,15 @@ async function main() {
       rutaTrailer: 'https://youtu.be/_F_WwefYLIs?si=dS5p4HR8J_HRo9Ce',
       requierePremium: false,
       tipoContenido: 'ORIGINAL',
-      vistasTotales: 10000, likesTotales: 2000, dislikesTotales: 15,
-      generos: { connect: [{id:aventura.id}, {id:accion.id}] }
+      vistasTotales: 8900, likesTotales: 2100, dislikesTotales: 40,
+      generos: { connect: [{ id: aventura.id }, { id: accion.id }] }
     }
   });
 
   await prisma.pelicula.create({
     data: {
-      titulo: ' house on haunted hill',
+      id: '44dd44dd-44dd-44dd-44dd-44dd44dd44dd',
+      titulo: 'house on haunted hill',
       descripcion: 'House on Haunted Hill es una película de terror de 1959 dirigida por William Castle y protagonizada por Vincent Price, Carol Ohmart, Richard Long y Elisha Cook Jr. La película sigue a un millonario excéntrico que invita a cinco personas a pasar la noche en una mansión embrujada, ofreciéndoles una recompensa si logran sobrevivir hasta el amanecer.',
       fechaLanzamiento: new Date('1959-10-01'),
       duracion: 105,
@@ -99,15 +103,16 @@ async function main() {
       rutaTrailer: 'https://youtu.be/nfhy9nWG6Gw?si=-f7O25kiXbMSyajx',
       requierePremium: false,
       tipoContenido: 'ORIGINAL',
-      vistasTotales: 10000, likesTotales: 2000, dislikesTotales: 15,
-      generos: { connect: [{id:terror.id}, {id:accion.id}, {id:misterio.id}, {id:suspenso.id}] }
+      vistasTotales: 5600, likesTotales: 1300, dislikesTotales: 35,
+      generos: { connect: [{ id: terror.id }, { id: accion.id }, { id: misterio.id }, { id: suspenso.id }] }
     }
   });
 
   await prisma.pelicula.create({
     data: {
-      titulo: ' lost world',
-      descripcion: 'The Lost World es una película de aventuras de 1925 dirigida por Harry O. Hoyt y basada en la novela homónima de Arthur Conan Doyle. La película sigue a un grupo de exploradores que viajan a una meseta remota en América del Sur, donde descubren un mundo perdido habitado por dinosaurios y otras criaturas prehistóricas.',
+      id: '55ee55ee-55ee-55ee-55ee-55ee55ee55ee',
+      titulo: 'lost world',
+      descripcion: 'The Lost World es una película de aventuras de 1925 dirigida por Harry O. Hoyt y basada en la novela homónima de Arthur Conan Doyle. La película sigue a un grupo de exploradores que viajan a una meseta remota en América del Sur, donde descubren un mundo perdido habitado por dinosaurios and otras criaturas prehistóricas.',
       fechaLanzamiento: new Date('1925-01-01'),
       duracion: 90,
       rutaCaratula: 'https://m.media-amazon.com/images/M/MV5BZjgzZWZhMDYtMDA2YS00MDQ5LWFiNTEtNjRkOTc1MDY5Mzg3XkEyXkFqcGc@._V1_.jpg',
@@ -116,14 +121,15 @@ async function main() {
       rutaTrailer: 'https://youtu.be/tYJ9-kgAfU0?si=TWOoo8vGtXQJorDk',
       requierePremium: false,
       tipoContenido: 'ORIGINAL',
-      vistasTotales: 10000, likesTotales: 2000, dislikesTotales: 15,
+      vistasTotales: 3200, likesTotales: 780, dislikesTotales: 10,
       generos: { connect: [{ id: aventura.id }, { id: cienciaFiccion.id }, { id: accion.id }] }
     }
   });
 
   await prisma.pelicula.create({
     data: {
-      titulo: ' phantom of the opera',
+      id: '66ff66ff-66ff-66ff-66ff-66ff66ff66ff',
+      titulo: 'phantom of the opera',
       descripcion: 'The Phantom of the Opera es una película de terror de 1925 dirigida por Rupert Julian y basada en la novela homónima de Gaston Leroux. La película sigue a un misterioso hombre enmascarado que acecha los pasillos del Teatro de la Ópera de París, causando terror entre los empleados y artistas. A medida que la historia se desarrolla, se revelan secretos oscuros sobre el pasado del fantasma y su obsesión por una joven cantante de ópera.',
       fechaLanzamiento: new Date('1925-01-01'),
       duracion: 90,
@@ -132,15 +138,17 @@ async function main() {
       rutaImagenFondo: 'https://i.ytimg.com/vi/-5hpf-OgGAU/hqdefault.jpg',
       rutaTrailer: 'https://youtu.be/5gncmKoTXB8?si=nWi8Fo_wbua-q5kG',
       requierePremium: false,
-      tipoContenido: 'ORIGINAL',
-      vistasTotales: 10000, likesTotales: 2000, dislikesTotales: 15,
+      tipoContenido: 'TERCEROS',
+      creadorId: 'b274e4fe-64fb-4021-a076-e1a820f5c569',
+      vistasTotales: 1540, likesTotales: 450, dislikesTotales: 8,
       generos: { connect: [{ id: terror.id }, { id: drama.id }, { id: suspenso.id }] }
     }
   });
 
   await prisma.pelicula.create({
     data: {
-      titulo: ' sita sings the blues small',
+      id: '77aa77aa-77aa-77aa-77aa-77aa77aa77aa',
+      titulo: 'sita sings the blues small',
       descripcion: 'Sita Sings the Blues es una película de animación independiente de 2008 dirigida por Nina Paley. La película es una reinterpretación moderna del Ramayana, un antiguo poema épico indio, y sigue la historia de Sita, la esposa del héroe Rama, mientras enfrenta desafíos y adversidades. La película combina animación tradicional con música de jazz y blues para contar la historia de Sita de una manera única y emotiva.',
       fechaLanzamiento: new Date('2008-10-01'),
       duracion: 82,
@@ -149,15 +157,13 @@ async function main() {
       rutaImagenFondo: 'https://www.google.com/imgres?q=sita%20sings%20the%20blues%20small%20trailer&imgurl=https%3A%2F%2Fm.media-amazon.com%2Fimages%2FS%2Fpv-target-images%2Fcef3a872126aff1c1e10c888315f40674e526574d4c33ed23ce12e775321b10d._SX1080_FMjpg_.jpg&imgrefurl=https%3A%2F%2Fwww.primevideo.com%2Fdetail%2F0JZNI5VIOM9UAB9H38QSFI8RB3&docid=fueoazHkLsfIrM&tbnid=2ybW8JzOKIW4nM&vet=12ahUKEwiNkbzCotiUAxXonGoFHQjLLSsQnPAOegQIHxAB..i&w=1080&h=608&hcb=2&ved=2ahUKEwiNkbzCotiUAxXonGoFHQjLLSsQnPAOegQIHxAB.jpg',
       rutaTrailer: 'https://youtu.be/bbLdhJdL6Mg?si=MmNpsKDHpYQH16vk',
       requierePremium: false,
-      tipoContenido: 'ORIGINAL',
-      vistasTotales: 10000, likesTotales: 2000, dislikesTotales: 15,
+      tipoContenido: 'TERCEROS',
+      creadorId: 'a6fc9406-6c13-44ca-801d-8e429c1d19df',
+      vistasTotales: 980, likesTotales: 310, dislikesTotales: 4,
       generos: { connect: [{ id: animacion.id }, { id: musica.id }, { id: drama.id }] }
     }
   });
-
-  
-
-  console.log('✅ Base de datos de Catálogo poblada con éxito. Total: 24 películas.');
+  console.log('✅ Base de datos de Catálogo poblada con éxito. Total: 7 películas.');
 }
 
 main()

@@ -42,17 +42,30 @@ export default async function PeliculasPage() {
   const peliculas = await getPeliculas();
   const userProfile = await getUserProfile();
 
-  // 3. Lógica para agrupar películas por orden alfabético
+  // 3. Lógica para agrupar películas por orden alfabético de manera robusta y sin importar mayúsculas/minúsculas o espacios iniciales
   const peliculasAgrupadas = peliculas.reduce((grupos: Record<string, Pelicula[]>, pelicula) => {
-    const letraInicial = pelicula.titulo.charAt(0).toUpperCase();
+    const tituloLimpio = pelicula.titulo.trim();
+    if (!tituloLimpio) return grupos;
+
+    const letraInicial = tituloLimpio.charAt(0).toUpperCase();
     
     if (!grupos[letraInicial]) {
       grupos[letraInicial] = [];
     }
-    grupos[letraInicial].push(pelicula);
+    grupos[letraInicial].push({
+      ...pelicula,
+      titulo: tituloLimpio // Usamos el título limpio sin espacios iniciales
+    });
     
     return grupos;
   }, {});
+
+  // Ordenar películas alfabéticamente dentro de cada grupo (sin importar mayúsculas/minúsculas)
+  Object.keys(peliculasAgrupadas).forEach((letra) => {
+    peliculasAgrupadas[letra].sort((a, b) => 
+      a.titulo.localeCompare(b.titulo, "es", { sensitivity: "base" })
+    );
+  });
 
   return (
     <>
