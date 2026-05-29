@@ -40,7 +40,7 @@ services:
       - postgres
     networks:
       - stream-net
-  
+
   # Servicio de Interacciones (Likes y Comentarios)
   interactions-service:
     build: ./interactions-service
@@ -65,7 +65,7 @@ services:
       CATALOG_SERVICE_URL: http://catalog-service:8000
       USERS_SERVICE_URL: http://users-service:8000
       INTERACTIONS_SERVICE_URL: http://interactions-service:8000
-      STREAM_URL: http://streamhub.local/media/ 
+      STREAM_URL: http://streamhub.local/media/
       PORT: 8000
     depends_on:
       - catalog-service
@@ -80,7 +80,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      NEXT_PUBLIC_API_URL: http://localhost:8000
+      NEXT_PUBLIC_API_URL: http://18.219.138.234:8000
       API_URL: http://gateway-service:8000
     volumes:
       - ./frontend:/app

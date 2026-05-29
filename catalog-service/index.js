@@ -31,7 +31,7 @@ const getActiveStudioIds = async () => {
 app.get('/peliculas', async (req, res) => {
   const { creadorId } = req.query;
   let where = {};
-  
+
   if (creadorId) {
     // Si se consulta un creador específico (ej: panel Studio administrativo), no filtramos visibilidad
     where = { creadorId };
@@ -47,9 +47,9 @@ app.get('/peliculas', async (req, res) => {
   }
 
   try {
-    const peliculas = await prisma.pelicula.findMany({ 
+    const peliculas = await prisma.pelicula.findMany({
       where,
-      include: { generos: true } 
+      include: { generos: true }
     });
     res.json(peliculas);
   } catch (error) {
@@ -69,12 +69,12 @@ app.get('/peliculas/estrenos', async (req, res) => {
           { creadorId: { in: activeStudioIds } }
         ]
       },
-      orderBy: { 
-        fechaLanzamiento: 'desc' 
+      orderBy: {
+        fechaLanzamiento: 'desc'
       },
-      take: 10, 
+      take: 10,
       include: {
-        generos: true 
+        generos: true
       }
     });
     res.json(estrenos);
@@ -95,12 +95,12 @@ app.get('/peliculas/top', async (req, res) => {
           { creadorId: { in: activeStudioIds } }
         ]
       },
-      orderBy: { 
-        vistasTotales: 'desc' 
+      orderBy: {
+        vistasTotales: 'desc'
       },
-      take: 10, 
+      take: 10,
       include: {
-        generos: true 
+        generos: true
       }
     });
     res.json(topPeliculas);
@@ -116,7 +116,7 @@ app.post('/peliculas/batch', async (req, res) => {
   try {
     const activeStudioIds = await getActiveStudioIds();
     const peliculas = await prisma.pelicula.findMany({
-      where: { 
+      where: {
         id: { in: ids },
         OR: [
           { creadorId: null },
@@ -133,10 +133,10 @@ app.post('/peliculas/batch', async (req, res) => {
 });
 
 app.post('/peliculas', async (req, res) => {
-  const { 
-    titulo, descripcion, fechaLanzamiento, duracion, 
-    rutaCaratula, rutaVideo, rutaImagenFondo, rutaTrailer, 
-    creadorId, generos 
+  const {
+    titulo, descripcion, fechaLanzamiento, duracion,
+    rutaCaratula, rutaVideo, rutaImagenFondo, rutaTrailer,
+    creadorId, generos
   } = req.body;
 
   try {
@@ -182,7 +182,7 @@ app.get('/peliculas/:id', async (req, res) => {
       where: { id: req.params.id },
       include: { generos: true }
     });
-    
+
     if (!pelicula) {
       return res.status(404).json({ error: "Película no encontrada" });
     }
@@ -191,9 +191,9 @@ app.get('/peliculas/:id', async (req, res) => {
     if (pelicula.creadorId) {
       const activeStudioIds = await getActiveStudioIds();
       if (!activeStudioIds.includes(pelicula.creadorId)) {
-        return res.status(403).json({ 
-          error: "content_suspended", 
-          message: "Este contenido no se encuentra disponible temporalmente porque el creador no cuenta con una suscripción activa." 
+        return res.status(403).json({
+          error: "content_suspended",
+          message: "Este contenido no se encuentra disponible temporalmente porque el creador no cuenta con una suscripción activa."
         });
       }
     }
@@ -201,7 +201,7 @@ app.get('/peliculas/:id', async (req, res) => {
     res.json(pelicula);
   } catch (error) {
     res.status(400).json({ error: "ID no válido o no encontrado" });
-  } 
+  }
 });
 
 app.patch('/peliculas/:id/estadisticas', async (req, res) => {
@@ -216,7 +216,7 @@ app.patch('/peliculas/:id/estadisticas', async (req, res) => {
       where: { id: req.params.id },
       data: dataUpdate
     });
-    
+
     res.json({ creadorId: peliculaActualizada.creadorId, tipoContenido: peliculaActualizada.tipoContenido });
   } catch (error) {
     res.status(500).json({ error: "Error al actualizar estadísticas" });
@@ -234,7 +234,7 @@ app.patch('/peliculas/:id/estadisticas/diff', async (req, res) => {
       where: { id: req.params.id },
       data: dataUpdate
     });
-    
+
     res.json({ success: true, likesTotales: peliculaActualizada.likesTotales, dislikesTotales: peliculaActualizada.dislikesTotales });
   } catch (error) {
     console.error("Error al actualizar estadísticas por diff:", error);

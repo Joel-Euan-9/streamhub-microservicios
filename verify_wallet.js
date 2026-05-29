@@ -3,9 +3,9 @@ const axios = require('axios');
 async function runTests() {
   console.log("🚀 Iniciando Suite de Verificación del Sistema de Ingresos...\n");
 
-  const USERS_URL = 'http://localhost:8002';
-  const CATALOG_URL = 'http://localhost:8001';
-  const GATEWAY_URL = 'http://localhost:8000';
+  const USERS_URL = 'http://18.219.138.234:8002';
+  const CATALOG_URL = 'http://18.219.138.234:8001';
+  const GATEWAY_URL = 'http://18.219.138.234:8000';
 
   try {
     // 1. Obtener detalles de usuarios desde la base de datos de usuarios
@@ -89,7 +89,7 @@ async function runTests() {
       minuto: 70,
       completada: false
     });
-    
+
     const profileJoelAfterSpam = await axios.get(`${GATEWAY_URL}/api/perfil`, {
       headers: { Authorization: joelToken }
     });
@@ -102,7 +102,7 @@ async function runTests() {
       monto: 500.0,
       descripcion: "Abono masivo para pruebas de retiro"
     });
-    
+
     const profileJoelMassive = await axios.get(`${GATEWAY_URL}/api/perfil`, {
       headers: { Authorization: joelToken }
     });
