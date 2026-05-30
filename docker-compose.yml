@@ -80,7 +80,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      NEXT_PUBLIC_API_URL: http://18.219.138.234:8000
+      NEXT_PUBLIC_API_URL: http://18.188.19.21:8000
       API_URL: http://gateway-service:8000
     volumes:
       - ./frontend:/app

@@ -9,8 +9,10 @@ RUN npm install
 
 COPY . .
 
-#RUN npm run build
+# Construimos la aplicación para producción
+RUN npm run build
 
 EXPOSE 3000
 
-CMD ["npm", "run", "dev", "--", "--webpack"]
+# Iniciamos el servidor de producción (ya no usamos "dev")
+CMD ["npm", "start"]
