@@ -12,7 +12,7 @@ const axios = require('axios');
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors({
-  origin: "http://localhost:3000",
+  origin: "http://18.188.19.21:3000",
   credentials: true
 }));
 
@@ -31,7 +31,7 @@ app.post('/historial', async (req, res) => {
     // Si el espectador ha visto 60 segundos o más y aún no ha sido monetizado
     if (minuto >= 60 && (!existente || !existente.monetizada)) {
       markMonetizada = true;
-      
+
       try {
         // Registrar vista en catálogo y en interacciones mensuales
         try {
@@ -76,16 +76,16 @@ app.post('/historial', async (req, res) => {
 
     const visualizacion = await prisma.visualizacion.upsert({
       where: { usuarioId_peliculaId: { usuarioId, peliculaId } },
-      update: { 
-        minutoPausa: minuto, 
-        completada, 
+      update: {
+        minutoPausa: minuto,
+        completada,
         monetizada: existente?.monetizada || markMonetizada,
-        ultimaVezVisto: new Date() 
+        ultimaVezVisto: new Date()
       },
-      create: { 
-        usuarioId, 
-        peliculaId, 
-        minutoPausa: minuto, 
+      create: {
+        usuarioId,
+        peliculaId,
+        minutoPausa: minuto,
         completada,
         monetizada: markMonetizada
       }
@@ -524,12 +524,12 @@ app.post('/usuarios/:id/ver-pelicula', async (req, res) => {
 
     // Si es una nueva película en el mismo día y ya llegó a 5
     if (!isNewDay && viewedIds.length >= 5) {
-      return res.json({ 
-        success: false, 
-        allowed: false, 
-        error: "daily_limit_reached", 
+      return res.json({
+        success: false,
+        allowed: false,
+        error: "daily_limit_reached",
         message: "Has alcanzado el límite diario de 5 películas en tu plan Básico.",
-        viewsCount: viewedIds.length 
+        viewsCount: viewedIds.length
       });
     }
 
@@ -550,10 +550,10 @@ app.post('/usuarios/:id/ver-pelicula', async (req, res) => {
       }
     });
 
-    return res.json({ 
-      success: true, 
-      allowed: true, 
-      viewsCount: newViewedIds.length 
+    return res.json({
+      success: true,
+      allowed: true,
+      viewsCount: newViewedIds.length
     });
 
   } catch (error) {

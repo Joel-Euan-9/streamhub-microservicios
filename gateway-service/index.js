@@ -10,7 +10,7 @@ const cookieParser = require('cookie-parser');
 const app = express();
 
 app.use(cors({
-  origin: "http://localhost:3000",
+  origin: "http://18.188.19.21:3000",
   credentials: true
 }));
 
@@ -28,7 +28,7 @@ const swaggerOptions = {
     },
     servers: [
       {
-        url: 'http://localhost:8000',
+        url: 'http://18.188.19.21:8000',
       },
     ],
     tags: [
@@ -965,7 +965,7 @@ app.get('/api/studio/estadisticas', authMiddleware, async (req, res) => {
     // Agrupar vistas por mes
     const mesNombres = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
     const vistasPorMes = {};
-    
+
     // Inicializar últimos 6 meses en 0 para asegurar que la gráfica siempre muestre datos
     const fechaActual = new Date();
     for (let i = 5; i >= 0; i--) {
