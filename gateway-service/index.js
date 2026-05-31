@@ -10,7 +10,7 @@ const cookieParser = require('cookie-parser');
 const app = express();
 
 app.use(cors({
-  origin: "http://18.219.138.234:3000",
+  origin: "http://18.188.19.21:3000",
   credentials: true
 }));
 
@@ -28,7 +28,7 @@ const swaggerOptions = {
     },
     servers: [
       {
-        url: 'http://18.219.138.234:8000',
+        url: 'http://18.188.19.21:8000',
       },
     ],
     tags: [

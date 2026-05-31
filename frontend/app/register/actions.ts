@@ -29,7 +29,7 @@ export async function registerUser(formData: FormData) {
     const { username, email, password } = validatedData.data;
 
     try {
-        const apiUrl = process.env.API_URL || "http://localhost:8000";
+        const apiUrl = process.env.API_URL || "http://gateway-service:8000";
         const res = await fetch(`${apiUrl}/api/auth/register`, {
             method: "POST",
             headers: {
@@ -75,7 +75,7 @@ export async function updateUserPlan(userId: string, plan: string) {
     const prismaPlan = planMap[plan] || 'BASIC';
 
     try {
-        const apiUrl = process.env.API_URL || "http://localhost:8000";
+        const apiUrl = process.env.API_URL || "http://gateway-service:8000";
         const res = await fetch(`${apiUrl}/api/usuarios/${userId}/plan`, {
             method: "PUT",
             headers: {
