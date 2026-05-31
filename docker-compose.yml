@@ -82,10 +82,10 @@ services:
     environment:
       NEXT_PUBLIC_API_URL: http://18.188.19.21:8000
       API_URL: http://gateway-service:8000
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-      - /app/.next
+    #volumes:
+    #  - ./frontend:/app
+    #  - /app/node_modules
+    #  - /app/.next
     depends_on:
       - gateway-service
     networks:
