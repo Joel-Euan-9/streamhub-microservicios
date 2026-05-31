@@ -30,7 +30,7 @@ export async function loginUser(formData: FormData) {
         cookieStore.set("token", data.token, {
             httpOnly: true,
             //secure true en producción, diferente en desarrollo para facilitar testing sin HTTPS 
-            secure: process.env.NODE_ENV === "production",
+            secure: false,
             sameSite: "lax",
             maxAge: 60 * 60 * 24, // 1 día
             path: "/"
