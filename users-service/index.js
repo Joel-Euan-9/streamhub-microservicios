@@ -12,7 +12,7 @@ const axios = require('axios');
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors({
-  origin: "http://18.219.138.234:3000",
+  origin: "http://18.221.9.168:3000",
   credentials: true
 }));
 
